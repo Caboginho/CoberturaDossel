@@ -1,0 +1,40 @@
+@startuml
+left to right direction
+actor "Pesquisador" as Pesquisador
+actor "Câmera do dispositivo" as Camera
+actor "Galeria/Arquivos" as Galeria
+actor "Armazenamento local" as Local
+actor "Compartilhamento/Exportação" as Exportacao
+rectangle "Cobertura Dossel" {
+  usecase "UC01 - Criar nova análise" as UC01
+  usecase "UC02 - Importar imagem" as UC02
+  usecase "UC03 - Capturar imagem" as UC03
+  usecase "UC04 - Registrar metadados" as UC04
+  usecase "UC05 - Gerar máscara automática" as UC05
+  usecase "UC06 - Visualizar máscara" as UC06
+  usecase "UC07 - Revisar máscara" as UC07
+  usecase "UC08 - Corrigir máscara manualmente" as UC08
+  usecase "UC13 - Calcular resultado final" as UC13
+  usecase "UC15 - Salvar análise" as UC15
+  usecase "UC18 - Exportar resultado" as UC18
+}
+Pesquisador --> UC01
+Pesquisador --> UC02
+Pesquisador --> UC03
+Pesquisador --> UC04
+Pesquisador --> UC06
+Pesquisador --> UC07
+Pesquisador --> UC08
+Pesquisador --> UC13
+Pesquisador --> UC15
+Pesquisador --> UC18
+Camera --> UC03
+Galeria --> UC02
+Local --> UC15
+Exportacao --> UC18
+UC01 .> UC04 : inclui
+UC02 .> UC05 : inclui
+UC03 .> UC05 : inclui
+UC07 .> UC08 : estende
+UC13 .> UC15 : inclui
+@enduml

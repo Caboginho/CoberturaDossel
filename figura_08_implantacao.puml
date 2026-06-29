@@ -1,0 +1,15 @@
+@startuml
+node "Dispositivo móvel Android" {
+  artifact "Cobertura Dossel APK" as App
+  database "SQLite local" as DB
+  folder "Armazenamento interno" as Storage
+  component "Câmera" as Camera
+  component "Galeria" as Gallery
+}
+App --> DB
+App --> Storage
+App --> Camera
+App --> Gallery
+node "Compartilhamento externo" as Share
+App --> Share : exportação manual
+@enduml

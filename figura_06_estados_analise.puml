@@ -1,0 +1,13 @@
+@startuml
+[*] --> Criada
+Criada --> ComImagem : imagem informada
+ComImagem --> Processada : máscara automática gerada
+Processada --> EmRevisao : pesquisador abre revisão
+EmRevisao --> Corrigida : correção manual realizada
+EmRevisao --> Validada : máscara aceita
+Corrigida --> Validada : máscara validada
+Validada --> Calculada : resultado final calculado
+Calculada --> Salva : análise persistida
+Salva --> Exportada : resultado exportado
+Exportada --> [*]
+@enduml

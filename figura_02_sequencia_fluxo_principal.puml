@@ -1,0 +1,25 @@
+@startuml
+actor Pesquisador
+participant "Interface mobile" as UI
+participant "AnaliseController" as Controller
+participant "ImagemService" as Imagem
+participant "ProcessamentoImagemService" as Proc
+participant "CalculoDosselService" as Calc
+participant "AnaliseRepository" as Repo
+Pesquisador -> UI : cria nova análise
+UI -> Controller : iniciarAnalise(metadados)
+Controller -> Imagem : obterImagem(origem)
+Imagem --> Controller : imagemOriginal
+Controller -> Proc : gerarMascaraAutomatica(imagemOriginal)
+Proc --> Controller : mascaraAutomatica
+Controller -> Calc : calcularResultado(mascaraAutomatica)
+Calc --> Controller : resultadoAutomatico
+Controller --> UI : exibir imagem, máscara e resultado
+Pesquisador -> UI : revisa ou corrige máscara
+UI -> Controller : validarMascara(mascaraFinal)
+Controller -> Calc : calcularResultado(mascaraFinal)
+Calc --> Controller : resultadoFinal
+Controller -> Repo : salvarAnalise(dados)
+Repo --> Controller : confirmação
+Controller --> UI : relatório disponível
+@enduml

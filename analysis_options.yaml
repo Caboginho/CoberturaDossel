@@ -1,0 +1,8 @@
+# Configuração de análise estática do projeto Cobertura Dossel.
+#
+# O projeto usa o conjunto recomendado de regras do Flutter e mantém o código
+# simples, legível e adequado para continuidade acadêmica.
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:

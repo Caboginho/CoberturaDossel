@@ -1,0 +1,25 @@
+@startuml
+start
+:criar nova análise;
+:registrar metadados opcionais;
+if (imagem será capturada?) then (sim)
+  :capturar imagem pela câmera;
+else (não)
+  :importar imagem da galeria;
+endif
+:validar formato da imagem;
+:gerar máscara automática céu/não céu;
+:calcular resultado automático;
+:exibir imagem e máscara;
+if (máscara está adequada?) then (sim)
+  :validar máscara;
+else (não)
+  :corrigir máscara manualmente;
+  :recalcular percentuais;
+  :validar máscara final;
+endif
+:calcular resultado final;
+:salvar análise localmente;
+:exportar relatório básico;
+stop
+@enduml

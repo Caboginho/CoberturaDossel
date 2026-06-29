@@ -1,0 +1,49 @@
+@startuml
+entity analises {
+  * id : text
+  --
+  nome : text
+  data_criacao : datetime
+  data_atualizacao : datetime
+  status_validacao : boolean
+}
+entity imagens {
+  * id : text
+  --
+  analise_id : text
+  caminho_arquivo : text
+  largura : integer
+  altura : integer
+  formato : text
+}
+entity mascaras {
+  * id : text
+  --
+  analise_id : text
+  tipo_mascara : text
+  caminho_arquivo : text
+  pixels_ceu : integer
+  pixels_nao_ceu : integer
+}
+entity resultados_analise {
+  * id : text
+  --
+  analise_id : text
+  mascara_id : text
+  percentual_ceu : real
+  percentual_dossel : real
+}
+entity metadados_analise {
+  * id : text
+  --
+  analise_id : text
+  local_descricao : text
+  condicao_ceu : text
+  tipo_ambiente : text
+}
+analises ||--|| imagens
+analises ||--|{ mascaras
+analises ||--|{ resultados_analise
+mascaras ||--|{ resultados_analise
+analises ||--o| metadados_analise
+@enduml

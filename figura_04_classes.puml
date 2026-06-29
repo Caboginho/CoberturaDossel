@@ -1,0 +1,59 @@
+@startuml
+class Analise {
+  id: String
+  nome: String
+  dataCriacao: DateTime
+  dataAtualizacao: DateTime
+  observacoes: String
+  statusValidacao: Boolean
+}
+class Imagem {
+  id: String
+  caminhoArquivo: String
+  largura: int
+  altura: int
+  formato: String
+  origem: OrigemImagem
+}
+class Mascara {
+  id: String
+  tipo: TipoMascara
+  caminhoArquivo: String
+  pixelsCeu: int
+  pixelsNaoCeu: int
+  pixelsInvalidos: int
+}
+class ResultadoAnalise {
+  id: String
+  pixelsValidos: int
+  percentualCeu: double
+  percentualDossel: double
+  dataCalculo: DateTime
+}
+class MetadadosAnalise {
+  id: String
+  localDescricao: String
+  condicaoCeu: CondicaoCeu
+  tipoAmbiente: TipoAmbiente
+}
+class EdicaoMascara {
+  id: String
+  dataHora: DateTime
+  ferramenta: TipoFerramenta
+  classeAplicada: ClassePixel
+}
+class AnaliseController
+class MascaraController
+class ProcessamentoImagemService
+class CalculoDosselService
+class AnaliseRepository
+Analise "1" -- "1" Imagem
+Analise "1" -- "1..*" Mascara
+Analise "1" -- "1..*" ResultadoAnalise
+Analise "1" -- "0..1" MetadadosAnalise
+Mascara "1" -- "0..*" EdicaoMascara
+AnaliseController --> ProcessamentoImagemService
+AnaliseController --> CalculoDosselService
+AnaliseController --> AnaliseRepository
+MascaraController --> CalculoDosselService
+@enduml

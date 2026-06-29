@@ -1,0 +1,23 @@
+@startuml
+package "Aplicativo mobile" {
+  [Interface]
+  [Controladores]
+  [Domínio]
+  [Serviços de imagem]
+  [Serviços de cálculo]
+  [Editor de máscara]
+  [Repositórios]
+  [Exportação]
+}
+database "SQLite local" as SQLite
+folder "Arquivos locais" as Files
+[Interface] --> [Controladores]
+[Controladores] --> [Domínio]
+[Controladores] --> [Serviços de imagem]
+[Controladores] --> [Serviços de cálculo]
+[Controladores] --> [Editor de máscara]
+[Controladores] --> [Repositórios]
+[Repositórios] --> SQLite
+[Repositórios] --> Files
+[Exportação] --> Files
+@enduml
