@@ -164,10 +164,10 @@ class ArquivoService {
     return p.join(diretorio.path, nomeArquivo);
   }
 
-  /// Gera um caminho seguro para arquivo CSV de exportacao.
+  /// Gera um caminho seguro para arquivo CSV de exportação.
   ///
-  /// O arquivo exportado sempre fica separado da imagem original e das mascaras.
-  /// Caso um arquivo com o mesmo nome exista, um contador e acrescentado para
+  /// O arquivo exportado sempre fica separado da imagem original e das máscaras.
+  /// Caso um arquivo com o mesmo nome exista, um contador é acrescentado para
   /// evitar sobrescrita.
   Future<String> gerarCaminhoSeguroExportacaoCsv({
     required String analiseId,
@@ -180,10 +180,10 @@ class ArquivoService {
     );
   }
 
-  /// Gera um caminho seguro para arquivo JSON de exportacao.
+  /// Gera um caminho seguro para arquivo JSON de exportação.
   ///
-  /// A exportacao JSON e um novo arquivo de texto e nao altera arquivos de
-  /// imagem, mascara automatica ou mascara final validada.
+  /// A exportação JSON é um novo arquivo de texto e não altera arquivos de
+  /// imagem, máscara automática ou máscara final validada.
   Future<String> gerarCaminhoSeguroExportacaoJson({
     required String analiseId,
     DateTime? dataHora,

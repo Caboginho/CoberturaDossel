@@ -10,5 +10,11 @@ void main() {
       find.textContaining('imagem digital e máscara validada'),
       findsOneWidget,
     );
+    expect(
+      find.textContaining('não usa inteligência artificial'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('não mede LAI diretamente'), findsOneWidget);
+    expect(find.textContaining('ainda não gera PDF'), findsOneWidget);
   });
 }

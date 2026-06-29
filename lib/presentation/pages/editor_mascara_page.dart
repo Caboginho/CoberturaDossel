@@ -291,7 +291,9 @@ class _EditorMascaraPageState extends State<EditorMascaraPage> {
         return;
       }
       setState(() {
-        _erroCarregamento = erro.toString();
+        _erroCarregamento =
+            'Não foi possível carregar a máscara automática. '
+            'Volte ao processamento e gere a máscara novamente. Detalhe: $erro';
         _carregandoMascara = false;
       });
     }

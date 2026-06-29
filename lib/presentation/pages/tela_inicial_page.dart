@@ -8,7 +8,7 @@ import '../widgets/pagina_base.dart';
 /// Tela inicial do aplicativo.
 ///
 /// Apresenta o objetivo científico do MVP sem prometer IA, medição direta de LAI
-/// ou processamento real nesta fase.
+/// ou relatórios avançados.
 class TelaInicialPage extends StatelessWidget {
   const TelaInicialPage({super.key});
 
@@ -32,6 +32,13 @@ class TelaInicialPage extends StatelessWidget {
               'O MVP foi planejado para funcionar localmente e offline. '
               'A imagem original deve permanecer preservada durante todo o fluxo.',
           icone: Icons.offline_pin,
+        ),
+        const CartaoInformativo(
+          titulo: 'Limites do MVP',
+          texto:
+              'O sistema usa regras visuais simples, não usa inteligência '
+              'artificial, não mede LAI diretamente e ainda não gera PDF.',
+          icone: Icons.info_outline,
         ),
         BotaoPrimario(
           rotulo: 'Nova análise',

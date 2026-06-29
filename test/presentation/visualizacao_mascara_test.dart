@@ -153,7 +153,7 @@ void main() {
       expect(find.text('Imagem original preservada'), findsOneWidget);
       expect(
         find.textContaining(
-          'A imagem original é preservada. A revisão futura ocorrerá apenas '
+          'A imagem original é preservada. A revisão manual ocorre apenas '
           'sobre a máscara.',
         ),
         findsOneWidget,

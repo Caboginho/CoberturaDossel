@@ -97,7 +97,7 @@ class ExportacaoService {
     }
   }
 
-  /// Gera CSV simples, compativel com planilhas.
+  /// Gera CSV simples, compatível com planilhas.
   ///
   /// O conteúdo diferencia resultado automático e resultado final. Campos sem
   /// dado, como máscara final ainda não validada, ficam vazios.

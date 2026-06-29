@@ -82,7 +82,7 @@ class _AnalisePageState extends State<AnalisePage> {
         const CartaoInformativo(
           titulo: 'Imagem original preservada',
           texto:
-              'A imagem original é preservada. A revisão futura ocorrerá '
+              'A imagem original é preservada. A revisão manual ocorre '
               'apenas sobre a máscara.',
           icone: Icons.lock_outline,
         ),

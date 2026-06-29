@@ -1,6 +1,8 @@
 import 'package:cobertura_dossel/application/application.dart';
 import 'package:cobertura_dossel/domain/domain.dart';
+import 'package:cobertura_dossel/presentation/pages/exportacao_page.dart';
 import 'package:cobertura_dossel/presentation/pages/resultados_page.dart';
+import 'package:cobertura_dossel/presentation/routes/rotas_app.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -119,6 +121,51 @@ void main() {
     );
     expect(salvamentoFake.dadosRecebidos, isNotNull);
   });
+
+  testWidgets('abre exportação com resultado automático sem máscara final', (
+    tester,
+  ) async {
+    await _montarResultadosComRotaExportacao(
+      tester,
+      argumento: DadosProcessamentoAnalise(
+        analise: _criarAnalise(statusValidacao: false),
+        processamento: _criarProcessamentoAutomatico(),
+      ),
+    );
+
+    await _rolarAteTexto(tester, 'Exportar resultado');
+    await tester.tap(find.text('Exportar resultado'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Exportação'), findsOneWidget);
+    expect(find.text('CSV'), findsOneWidget);
+    expect(find.text('JSON'), findsOneWidget);
+    expect(find.textContaining('Máscara final: não validada'), findsOneWidget);
+  });
+
+  testWidgets('abre exportação com resultado final validado', (tester) async {
+    await _montarResultadosComRotaExportacao(
+      tester,
+      argumento: DadosValidacaoAnalise(
+        analise: _criarAnalise(statusValidacao: true),
+        validacao: _criarValidacaoFinal(),
+      ),
+    );
+
+    await _rolarAteTexto(tester, 'Exportar resultado');
+    await tester.tap(find.text('Exportar resultado'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Exportação'), findsOneWidget);
+    expect(
+      find.textContaining('Máscara final: mascara_final.png'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('Resultado final: 75.00% de dossel'),
+      findsOneWidget,
+    );
+  });
 }
 
 class _SalvamentoAnaliseFake extends SalvamentoAnaliseService {
@@ -153,6 +200,29 @@ Future<void> _montarResultadosPage(
           builder: (_) => ResultadosPage(
             salvamentoAnaliseService: salvamentoAnaliseService,
           ),
+        );
+      },
+    ),
+  );
+}
+
+Future<void> _montarResultadosComRotaExportacao(
+  WidgetTester tester, {
+  required Object argumento,
+}) {
+  return tester.pumpWidget(
+    MaterialApp(
+      onGenerateRoute: (settings) {
+        if (settings.name == RotasApp.exportacao) {
+          return MaterialPageRoute<void>(
+            settings: settings,
+            builder: (_) => const ExportacaoPage(),
+          );
+        }
+
+        return MaterialPageRoute<void>(
+          settings: RouteSettings(arguments: argumento),
+          builder: (_) => const ResultadosPage(),
         );
       },
     ),

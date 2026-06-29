@@ -11,7 +11,8 @@ import '../widgets/titulo_secao.dart';
 /// Tela de processamento automático inicial.
 ///
 /// A Fase 5 gera uma máscara automática separada e um resultado preliminar. A
-/// visualização com sobreposição e a correção manual ficam para fases futuras.
+/// visualização, a correção manual, o salvamento e a exportação são conduzidos
+/// por telas e serviços próprios para manter as camadas separadas.
 class ProcessamentoPage extends StatefulWidget {
   const ProcessamentoPage({this.processamentoImagemService, super.key});
 

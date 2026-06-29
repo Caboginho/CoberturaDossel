@@ -46,7 +46,7 @@ Regras centrais:
 - Fase 8 - Consolidação do cálculo e da apresentação dos resultados.
 - Fase 9 - Salvamento completo da análise no SQLite e listagem de análises salvas.
 - Fase 10 - Exportação básica em CSV e JSON.
-- Fase 11 - Testes e validação funcional.
+- Fase 11 - Revisão técnica, padronização, reforço de testes e preparação para validação funcional.
 - Fase 12 - Validação com imagens.
 
 ## Arquitetura
@@ -79,9 +79,9 @@ test/
   presentation/
 ```
 
-A Fase 2 concentra persistência local em `lib/data` e organização de arquivos em `lib/infrastructure/storage`. Não há telas, câmera, galeria, editor de máscara, segmentação de imagem ou exportação real nesta fase.
+A Fase 2 concentrou persistência local em `lib/data` e organização de arquivos em `lib/infrastructure/storage`.
 
-A Fase 3 cria a interface inicial e a navegação básica em `lib/presentation`. As telas são navegáveis e apresentam placeholders claros para câmera, galeria, segmentação real, editor real de máscara, salvamento completo e exportação real, que continuam reservados para fases posteriores.
+A Fase 3 criou a interface inicial e a navegação básica em `lib/presentation`.
 
 A Fase 4 conecta a tela de escolha de imagem aos serviços de entrada por galeria e câmera. A imagem selecionada ou capturada é validada, copiada para o armazenamento interno e registrada como caminho de arquivo. A imagem original não é comprimida, redimensionada, pintada ou alterada.
 
@@ -242,7 +242,7 @@ Cuidados mantidos:
 - A máscara automática não é sobrescrita.
 - A máscara final permanece como arquivo separado.
 - O sistema calcula céu visível e dossel estimado; não mede LAI diretamente.
-- A persistência completa da análise, imagem, máscaras e resultados no SQLite fica reservada para a Fase 9.
+- A persistência completa da análise, imagem, máscaras e resultados no SQLite foi conectada na Fase 9.
 
 ## Salvamento da Análise
 
@@ -300,12 +300,46 @@ Cuidados mantidos:
 - O banco e os arquivos exportados continuam armazenando caminhos, metadados e resultados, nunca blobs de imagem nem pixels individuais.
 - Os arquivos exportados servem para análise posterior em planilhas ou scripts.
 
+## Revisão Técnica e Validação
+
+A Fase 11 estabiliza o MVP para a validação com imagens reais. O foco desta fase é revisão técnica, limpeza de mensagens, padronização da documentação, reforço de testes e preparação de roteiros manuais. Não foram adicionadas funcionalidades grandes, inteligência artificial, medição direta de LAI, PDF, autenticação, nuvem ou análise em lote.
+
+Revisões realizadas:
+
+- As camadas `domain`, `application`, `data`, `infrastructure` e `presentation` permanecem separadas.
+- Serviços de domínio e aplicação concentram as regras principais de cálculo, processamento, edição, salvamento, consulta e exportação.
+- Telas permanecem responsáveis por navegação, estado visual e mensagens ao usuário.
+- Mensagens da interface reforçam que o resultado automático é preliminar, que o resultado final depende da máscara validada e que a imagem original não é alterada.
+- O tratamento de cancelamento, falhas de processamento, falhas de salvamento, falhas de listagem e falhas de exportação exibe mensagens compreensíveis.
+
+Documentos adicionados:
+
+- `docs/checklist_validacao_manual.md`: roteiro para testar manualmente o fluxo do MVP.
+- `docs/plano_validacao_imagens_reais.md`: plano para organizar imagens reais e registrar percentuais, diferenças e erros observados na Fase 12.
+
+Fluxo completo disponível no MVP:
+
+1. Criar análise.
+2. Importar imagem da galeria ou capturar com câmera.
+3. Copiar a imagem para armazenamento interno sem alterar o arquivo original.
+4. Gerar máscara automática por regras visuais simples.
+5. Visualizar imagem original, máscara automática, sobreposição e lado a lado.
+6. Corrigir a máscara manualmente.
+7. Validar máscara final em arquivo separado.
+8. Calcular céu visível e dossel estimado.
+9. Salvar análise localmente no SQLite.
+10. Listar análises salvas.
+11. Exportar resultados em CSV ou JSON.
+
 Limitações conhecidas:
 
 - A heurística pode errar em folhas claras, flores claras, céu nublado, reflexos e bordas complexas.
 - O resultado não mede LAI diretamente nem representa cobertura real absoluta do dossel.
 - Imagens muito grandes podem exigir otimizações futuras, sempre preservando a imagem original.
 - A reabertura completa de uma análise salva, a exportação PDF real e uma tela de histórico de exportações ficam para fases posteriores.
+- A segmentação usa regras visuais simples e pode errar em céu nublado, folhas claras, flores claras, reflexos, galhos finos e bordas complexas.
+- Inteligência artificial, sincronização em nuvem, autenticação, análise em lote e estatísticas avançadas não fazem parte do MVP atual.
+- No Windows, caminhos muito longos podem causar falhas de build ou de ferramentas. Para validação local, prefira um caminho curto, por exemplo `E:\dev\CoberturaDossel`.
 
 ## Comandos
 
@@ -331,4 +365,10 @@ Executar o aplicativo base:
 
 ```bash
 flutter run
+```
+
+Gerar build web de validação em caminho temporário:
+
+```bash
+flutter build web --debug --no-pub --no-wasm-dry-run --output %TEMP%\cobertura_dossel_web_phase11
 ```
