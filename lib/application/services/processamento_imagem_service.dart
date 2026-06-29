@@ -4,6 +4,7 @@ import 'package:image/image.dart' as img;
 
 import '../../domain/domain.dart';
 import '../../infrastructure/storage/arquivo_service.dart';
+import 'resultado_analise_service.dart';
 import 'resultado_processamento_imagem.dart';
 
 /// Serviço de aplicação para gerar a máscara automática inicial.
@@ -14,15 +15,15 @@ import 'resultado_processamento_imagem.dart';
 class ProcessamentoImagemService {
   ProcessamentoImagemService({
     ClassificadorCeuNaoCeuService? classificador,
-    CalculoDosselService? calculoDosselService,
+    ResultadoAnaliseService? resultadoAnaliseService,
     ArquivoService? arquivoService,
   }) : _classificador = classificador ?? const ClassificadorCeuNaoCeuService(),
-       _calculoDosselService =
-           calculoDosselService ?? const CalculoDosselService(),
+       _resultadoAnaliseService =
+           resultadoAnaliseService ?? const ResultadoAnaliseService(),
        _arquivoService = arquivoService ?? ArquivoService();
 
   final ClassificadorCeuNaoCeuService _classificador;
-  final CalculoDosselService _calculoDosselService;
+  final ResultadoAnaliseService _resultadoAnaliseService;
   final ArquivoService _arquivoService;
 
   /// Gera máscara automática céu/não céu e resultado preliminar.
@@ -88,19 +89,6 @@ class ProcessamentoImagemService {
       );
     }
 
-    final pixelsValidos = _calculoDosselService.calcularPixelsValidos(
-      pixelsCeu: pixelsCeu,
-      pixelsNaoCeu: pixelsNaoCeu,
-    );
-    final percentualCeu = _calculoDosselService.calcularPercentualCeu(
-      pixelsCeu: pixelsCeu,
-      pixelsValidos: pixelsValidos,
-    );
-    final percentualDossel = _calculoDosselService.calcularPercentualDossel(
-      percentualCeu: percentualCeu,
-      pixelsValidos: pixelsValidos,
-    );
-
     final mascara = Mascara(
       id: idMascara,
       analiseId: imagem.analiseId,
@@ -115,17 +103,10 @@ class ProcessamentoImagemService {
       dataCriacao: agora,
     );
 
-    final resultado = ResultadoAnalise(
-      id: resultadoId ?? 'resultado_${agora.microsecondsSinceEpoch}',
-      analiseId: imagem.analiseId,
-      mascaraId: mascara.id,
-      tipoMascara: TipoMascara.automatica,
-      pixelsValidos: pixelsValidos,
-      pixelsCeu: pixelsCeu,
-      pixelsNaoCeu: pixelsNaoCeu,
-      percentualCeu: percentualCeu,
-      percentualDossel: percentualDossel,
-      dataCalculo: agora,
+    final resultado = _resultadoAnaliseService.criarResultadoAutomatico(
+      mascaraAutomatica: mascara,
+      resultadoId: resultadoId,
+      dataHora: agora,
     );
 
     return ResultadoProcessamentoImagem(

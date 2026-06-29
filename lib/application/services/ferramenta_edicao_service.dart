@@ -5,6 +5,7 @@ import 'package:image/image.dart' as img;
 import '../../domain/domain.dart';
 import '../../infrastructure/storage/arquivo_service.dart';
 import '../models/acao_edicao_mascara.dart';
+import 'resultado_analise_service.dart';
 import 'resultado_processamento_imagem.dart';
 import 'resultado_validacao_mascara.dart';
 
@@ -16,16 +17,16 @@ import 'resultado_validacao_mascara.dart';
 class FerramentaEdicaoService {
   FerramentaEdicaoService({
     ArquivoService? arquivoService,
-    CalculoDosselService? calculoDosselService,
+    ResultadoAnaliseService? resultadoAnaliseService,
   }) : _arquivoService = arquivoService ?? ArquivoService(),
-       _calculoDosselService =
-           calculoDosselService ?? const CalculoDosselService();
+       _resultadoAnaliseService =
+           resultadoAnaliseService ?? const ResultadoAnaliseService();
 
   static const (int, int, int) corCeu = (0, 102, 255);
   static const (int, int, int) corNaoCeu = (34, 139, 34);
 
   final ArquivoService _arquivoService;
-  final CalculoDosselService _calculoDosselService;
+  final ResultadoAnaliseService _resultadoAnaliseService;
 
   /// Carrega a máscara automática a partir do caminho salvo na entidade.
   ///
@@ -155,25 +156,6 @@ class FerramentaEdicaoService {
     await File(caminhoMascaraFinal).writeAsBytes(img.encodePng(mascaraEditada));
 
     final contagem = contarPixels(mascaraEditada);
-    final pixelsValidos = _calculoDosselService.calcularPixelsValidos(
-      pixelsCeu: contagem.pixelsCeu,
-      pixelsNaoCeu: contagem.pixelsNaoCeu,
-    );
-    final percentualCeu = _calculoDosselService.calcularPercentualCeu(
-      pixelsCeu: contagem.pixelsCeu,
-      pixelsValidos: pixelsValidos,
-    );
-    final percentualDossel = _calculoDosselService.calcularPercentualDossel(
-      percentualCeu: percentualCeu,
-      pixelsValidos: pixelsValidos,
-    );
-    final diferencaPercentual = _calculoDosselService
-        .calcularDiferencaPercentual(
-          percentualAutomatico:
-              processamento.resultadoAutomatico.percentualDossel,
-          percentualFinal: percentualDossel,
-        );
-
     final mascaraFinal = Mascara(
       id: idMascara,
       analiseId: processamento.imagem.analiseId,
@@ -188,18 +170,11 @@ class FerramentaEdicaoService {
       dataCriacao: agora,
     );
 
-    final resultadoFinal = ResultadoAnalise(
-      id: resultadoId ?? 'resultado_final_${agora.microsecondsSinceEpoch}',
-      analiseId: processamento.imagem.analiseId,
-      mascaraId: mascaraFinal.id,
-      tipoMascara: TipoMascara.finalValidada,
-      pixelsValidos: pixelsValidos,
-      pixelsCeu: contagem.pixelsCeu,
-      pixelsNaoCeu: contagem.pixelsNaoCeu,
-      percentualCeu: percentualCeu,
-      percentualDossel: percentualDossel,
-      diferencaPercentual: diferencaPercentual,
-      dataCalculo: agora,
+    final resultadoFinal = _resultadoAnaliseService.criarResultadoFinal(
+      mascaraFinal: mascaraFinal,
+      resultadoAutomatico: processamento.resultadoAutomatico,
+      resultadoId: resultadoId,
+      dataHora: agora,
     );
 
     return ResultadoValidacaoMascara(

@@ -1,7 +1,9 @@
 export 'models/acao_edicao_mascara.dart';
+export 'models/resumo_resultado_analise.dart';
 export 'services/ferramenta_edicao_service.dart';
 export 'services/historico_edicao_service.dart';
 export 'services/imagem_service.dart';
 export 'services/processamento_imagem_service.dart';
+export 'services/resultado_analise_service.dart';
 export 'services/resultado_processamento_imagem.dart';
 export 'services/resultado_validacao_mascara.dart';

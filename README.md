@@ -43,7 +43,7 @@ Regras centrais:
 - Fase 5 - Segmentação automática inicial por regras visuais: classificador céu/não céu, máscara automática separada e resultado automático preliminar.
 - Fase 6 - Visualização da imagem original e da máscara automática, com modos de comparação e sobreposição.
 - Fase 7 - Editor manual mínimo da máscara, com pintura, desfazer/refazer e validação final.
-- Fase 8 - Cálculo de resultados no fluxo da aplicação.
+- Fase 8 - Consolidação do cálculo e da apresentação dos resultados.
 - Fase 9 - Salvamento da análise.
 - Fase 10 - Exportação básica.
 - Fase 11 - Testes e validação funcional.
@@ -85,7 +85,7 @@ A Fase 3 cria a interface inicial e a navegação básica em `lib/presentation`.
 
 A Fase 4 conecta a tela de escolha de imagem aos serviços de entrada por galeria e câmera. A imagem selecionada ou capturada é validada, copiada para o armazenamento interno e registrada como caminho de arquivo. A imagem original não é comprimida, redimensionada, pintada ou alterada.
 
-A Fase 5 implementa a segmentação automática inicial por regras visuais. O processamento lê a imagem original preservada, gera uma máscara automática em arquivo PNG separado e calcula um resultado automático preliminar. A visualização com sobreposição foi iniciada na Fase 6 e a correção manual mínima foi iniciada na Fase 7.
+A Fase 5 implementa a segmentação automática inicial por regras visuais. O processamento lê a imagem original preservada, gera uma máscara automática em arquivo PNG separado e calcula um resultado automático preliminar. A visualização com sobreposição foi iniciada na Fase 6, a correção manual mínima foi iniciada na Fase 7 e a apresentação dos resultados foi consolidada na Fase 8.
 
 ## Persistência Local
 
@@ -217,6 +217,32 @@ Limitações da Fase 7:
 - A persistência em SQLite da máscara final e do resultado final ainda não foi conectada ao fluxo da tela.
 - A edição é funcional e mínima, sem ferramentas avançadas de seleção, preenchimento, atalhos ou ajustes finos de borda.
 - A exportação real continua reservada para fase posterior.
+
+## Resultados da Análise
+
+A Fase 8 consolida o cálculo e a apresentação dos resultados. O sistema agora usa um serviço de aplicação para criar resultado automático, criar resultado final, calcular diferença percentual e montar um resumo de apresentação para a tela de resultados.
+
+Serviços e modelos adicionados:
+
+- `ResultadoAnaliseService`: centraliza a criação de resultados e delega as fórmulas ao `CalculoDosselService`.
+- `ResumoResultadoAnalise`: agrupa imagem original, máscara automática, máscara final, resultado automático, resultado final, diferença percentual e mensagem de status.
+
+Comportamento implementado:
+
+- A `ResultadosPage` deixa de usar valores simulados quando recebe dados reais.
+- O resultado automático preliminar e o resultado final validado são exibidos separadamente.
+- Quando ainda não existe resultado final, a tela informa: `Resultado final ainda não validado pelo pesquisador.`
+- Quando existe resultado final, a tela informa: `O resultado final foi calculado a partir da máscara validada pelo pesquisador.`
+- A diferença percentual é calculada entre resultado automático e resultado final.
+- A tela mostra percentuais de céu visível e dossel estimado, pixels de céu e não céu, caminho da imagem original, caminho da máscara automática e caminho da máscara final quando existir.
+
+Cuidados mantidos:
+
+- A imagem original não é alterada.
+- A máscara automática não é sobrescrita.
+- A máscara final permanece como arquivo separado.
+- O sistema calcula céu visível e dossel estimado; não mede LAI diretamente.
+- A persistência completa da análise, imagem, máscaras e resultados no SQLite fica reservada para a Fase 9.
 
 Limitações conhecidas:
 

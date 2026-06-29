@@ -5,27 +5,33 @@ import '../routes/rotas_app.dart';
 import '../widgets/botao_primario.dart';
 import '../widgets/cartao_informativo.dart';
 import '../widgets/pagina_base.dart';
+import '../widgets/resultado_widgets.dart';
 import '../widgets/titulo_secao.dart';
 
 /// Tela de resultados da análise.
 ///
-/// Quando recebe dados reais da Fase 7, diferencia resultado automático
-/// preliminar e resultado final calculado a partir da máscara validada pelo
-/// pesquisador. Sem argumentos, preserva valores de exemplo para navegação.
+/// A Fase 8 usa [ResumoResultadoAnalise] para apresentar dados reais quando
+/// disponíveis. Valores simulados aparecem somente quando a tela é aberta sem
+/// dados de processamento ou validação.
 class ResultadosPage extends StatelessWidget {
-  const ResultadosPage({super.key});
+  const ResultadosPage({
+    ResultadoAnaliseService resultadoAnaliseService =
+        const ResultadoAnaliseService(),
+    super.key,
+  }) : _resultadoAnaliseService = resultadoAnaliseService;
+
+  final ResultadoAnaliseService _resultadoAnaliseService;
 
   @override
   Widget build(BuildContext context) {
     final argumento = ModalRoute.of(context)?.settings.arguments;
+    final resumo = _obterResumo(argumento);
 
     return PaginaBase(
       titulo: 'Resultados',
       filhos: [
-        if (argumento is ResultadoValidacaoMascara)
-          ..._resultadoValidado(argumento)
-        else if (argumento is ResultadoProcessamentoImagem)
-          ..._resultadoAutomatico(argumento)
+        if (resumo != null)
+          ..._resultadoReal(resumo)
         else
           ..._resultadoExemplo(),
         BotaoPrimario(
@@ -34,7 +40,7 @@ class ResultadosPage extends StatelessWidget {
           aoPressionar: () {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Salvamento será conectado em fase posterior.'),
+                content: Text('Salvamento será conectado na Fase 9.'),
               ),
             );
           },
@@ -48,87 +54,43 @@ class ResultadosPage extends StatelessWidget {
     );
   }
 
-  List<Widget> _resultadoValidado(ResultadoValidacaoMascara validacao) {
-    final automatico = validacao.resultadoAutomatico;
-    final finalValidado = validacao.resultadoFinal;
-    final diferenca = finalValidado.diferencaPercentual ?? 0;
+  ResumoResultadoAnalise? _obterResumo(Object? argumento) {
+    if (argumento is ResumoResultadoAnalise) {
+      return argumento;
+    }
 
-    return [
-      const CartaoInformativo(
-        titulo: 'Resultado final validado',
-        texto:
-            'O resultado final foi calculado a partir da máscara validada pelo '
-            'pesquisador.',
-        icone: Icons.verified_outlined,
-      ),
-      const TituloSecao('Resultado automático preliminar'),
-      _LinhaResultado(
-        rotulo: 'Céu visível automático',
-        valor: _formatarPercentual(automatico.percentualCeu),
-      ),
-      _LinhaResultado(
-        rotulo: 'Dossel estimado automático',
-        valor: _formatarPercentual(automatico.percentualDossel),
-      ),
-      const TituloSecao('Resultado final'),
-      _LinhaResultado(
-        rotulo: 'Céu visível final',
-        valor: _formatarPercentual(finalValidado.percentualCeu),
-      ),
-      _LinhaResultado(
-        rotulo: 'Dossel estimado final',
-        valor: _formatarPercentual(finalValidado.percentualDossel),
-      ),
-      _LinhaResultado(
-        rotulo: 'Diferença automático/final',
-        valor: '${diferenca.toStringAsFixed(2)} pontos percentuais',
-      ),
-      _LinhaResultado(
-        rotulo: 'Pixels de céu final',
-        valor: finalValidado.pixelsCeu.toString(),
-      ),
-      _LinhaResultado(
-        rotulo: 'Pixels de não céu final',
-        valor: finalValidado.pixelsNaoCeu.toString(),
-      ),
-      CartaoInformativo(
-        titulo: 'Arquivos da análise',
-        texto:
-            'Imagem original: ${validacao.imagem.caminhoArquivo}\n'
-            'Máscara automática: ${validacao.mascaraAutomatica.caminhoArquivo}\n'
-            'Máscara final: ${validacao.mascaraFinal.caminhoArquivo}',
-        icone: Icons.folder_open_outlined,
-      ),
-    ];
+    if (argumento is ResultadoValidacaoMascara) {
+      return _resultadoAnaliseService.criarResumoDeValidacao(argumento);
+    }
+
+    if (argumento is ResultadoProcessamentoImagem) {
+      return _resultadoAnaliseService.criarResumoDeProcessamento(argumento);
+    }
+
+    return null;
   }
 
-  List<Widget> _resultadoAutomatico(
-    ResultadoProcessamentoImagem processamento,
-  ) {
-    final automatico = processamento.resultadoAutomatico;
+  List<Widget> _resultadoReal(ResumoResultadoAnalise resumo) {
+    final resultadoFinal = resumo.resultadoFinal;
+    final mascaraFinal = resumo.mascaraFinal;
 
     return [
-      const CartaoInformativo(
-        titulo: 'Resultado automático preliminar',
-        texto:
-            'A máscara ainda não foi validada pelo pesquisador. O resultado '
-            'final será calculado após a revisão manual.',
-        icone: Icons.pending_actions,
-      ),
-      const TituloSecao('Resultado automático'),
-      _LinhaResultado(
-        rotulo: 'Céu visível automático',
-        valor: _formatarPercentual(automatico.percentualCeu),
-      ),
-      _LinhaResultado(
-        rotulo: 'Dossel estimado automático',
-        valor: _formatarPercentual(automatico.percentualDossel),
-      ),
+      if (resumo.resultadoFinalValidado)
+        AvisoResultadoValidado(mensagem: resumo.mensagemStatus)
+      else
+        AvisoResultadoPreliminar(mensagem: resumo.mensagemStatus),
+      CartaoResultadoAutomatico(resultado: resumo.resultadoAutomatico),
+      if (resultadoFinal != null && mascaraFinal != null)
+        CartaoResultadoFinal(
+          resultado: resultadoFinal,
+          diferencaPercentual: resumo.diferencaPercentual ?? 0,
+        ),
       CartaoInformativo(
         titulo: 'Arquivos da análise',
         texto:
-            'Imagem original: ${processamento.imagem.caminhoArquivo}\n'
-            'Máscara automática: ${processamento.mascaraAutomatica.caminhoArquivo}',
+            'Imagem original: ${resumo.imagemOriginal.caminhoArquivo}\n'
+            'Máscara automática: ${resumo.mascaraAutomatica.caminhoArquivo}'
+            '${mascaraFinal == null ? '' : '\nMáscara final: ${mascaraFinal.caminhoArquivo}'}',
         icone: Icons.folder_open_outlined,
       ),
     ];
@@ -144,9 +106,9 @@ class ResultadosPage extends StatelessWidget {
         icone: Icons.info_outline,
       ),
       TituloSecao('Resumo percentual'),
-      _LinhaResultado(rotulo: 'Céu visível', valor: '48,0%'),
-      _LinhaResultado(rotulo: 'Dossel estimado', valor: '52,0%'),
-      _LinhaResultado(
+      LinhaMetricaResultado(rotulo: 'Céu visível', valor: '48,0%'),
+      LinhaMetricaResultado(rotulo: 'Dossel estimado', valor: '52,0%'),
+      LinhaMetricaResultado(
         rotulo: 'Diferença automático/final',
         valor: '3,5 pontos percentuais',
       ),
@@ -158,37 +120,5 @@ class ResultadosPage extends StatelessWidget {
         icone: Icons.verified,
       ),
     ];
-  }
-
-  static String _formatarPercentual(double valor) {
-    return '${valor.toStringAsFixed(2)}%';
-  }
-}
-
-class _LinhaResultado extends StatelessWidget {
-  const _LinhaResultado({required this.rotulo, required this.valor});
-
-  final String rotulo;
-  final String valor;
-
-  @override
-  Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border.all(color: tema.colorScheme.outlineVariant),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Expanded(child: Text(rotulo)),
-            Text(valor, style: tema.textTheme.titleMedium),
-          ],
-        ),
-      ),
-    );
   }
 }
