@@ -41,8 +41,8 @@ Regras centrais:
 - Fase 3 - Interface inicial e navegação.
 - Fase 4 - Importação e captura de imagem: galeria, câmera, validação de formato e cópia preservada para armazenamento interno.
 - Fase 5 - Segmentação automática inicial por regras visuais: classificador céu/não céu, máscara automática separada e resultado automático preliminar.
-- Fase 6 - Visualização da máscara.
-- Fase 7 - Editor manual mínimo.
+- Fase 6 - Visualização da imagem original e da máscara automática, com modos de comparação e sobreposição.
+- Fase 7 - Editor manual mínimo da máscara, com pintura, desfazer/refazer e validação final.
 - Fase 8 - Cálculo de resultados no fluxo da aplicação.
 - Fase 9 - Salvamento da análise.
 - Fase 10 - Exportação básica.
@@ -85,7 +85,7 @@ A Fase 3 cria a interface inicial e a navegação básica em `lib/presentation`.
 
 A Fase 4 conecta a tela de escolha de imagem aos serviços de entrada por galeria e câmera. A imagem selecionada ou capturada é validada, copiada para o armazenamento interno e registrada como caminho de arquivo. A imagem original não é comprimida, redimensionada, pintada ou alterada.
 
-A Fase 5 implementa a segmentação automática inicial por regras visuais. O processamento lê a imagem original preservada, gera uma máscara automática em arquivo PNG separado e calcula um resultado automático preliminar. A visualização com sobreposição e a correção manual ficam para fases posteriores.
+A Fase 5 implementa a segmentação automática inicial por regras visuais. O processamento lê a imagem original preservada, gera uma máscara automática em arquivo PNG separado e calcula um resultado automático preliminar. A visualização com sobreposição foi iniciada na Fase 6 e a correção manual mínima foi iniciada na Fase 7.
 
 ## Persistência Local
 
@@ -172,7 +172,51 @@ Cuidados mantidos:
 - A imagem original não é alterada.
 - A máscara automática é salva como arquivo PNG separado.
 - Pixels individuais não são armazenados no SQLite.
-- A visualização com sobreposição e a correção manual serão implementadas em fases futuras.
+- A correção manual mínima foi iniciada na Fase 7.
+
+## Visualização da Máscara
+
+A Fase 6 adiciona a visualização da imagem original preservada e da máscara automática gerada na Fase 5. A tela de análise permite alternar entre:
+
+- `Imagem original`
+- `Máscara automática`
+- `Sobreposição`
+- `Lado a lado`
+
+Na sobreposição, a opacidade da máscara pode ser ajustada para apoiar a inspeção visual preliminar. A tela também apresenta o resumo do resultado automático com céu visível, dossel estimado, pixels de céu, pixels de não céu e caminho do arquivo da máscara.
+
+Cuidados mantidos:
+
+- A imagem original é apenas lida para visualização e nunca é alterada.
+- A máscara automática continua em arquivo separado.
+- O resultado automático é apresentado como inicial e ainda não validado.
+- A revisão real da máscara foi iniciada na Fase 7 com um editor manual mínimo.
+- Não há inteligência artificial, medição direta de LAI ou exportação visual nesta fase.
+
+## Editor Manual da Máscara
+
+A Fase 7 implementa um editor manual mínimo para corrigir a máscara automática. O pesquisador pode selecionar a classe `Céu` ou `Não céu`, escolher a ferramenta `Pincel` ou `Borracha`, ajustar o tamanho do pincel, pintar a máscara por toque ou arraste, usar zoom com navegação e acionar `Desfazer` ou `Refazer`.
+
+Comportamento implementado:
+
+- A edição ocorre somente sobre uma cópia em memória da máscara automática.
+- A imagem original é usada apenas como referência visual e nunca é alterada.
+- A máscara automática não é sobrescrita.
+- Ao validar, a máscara final é salva como novo arquivo PNG separado.
+- O resultado final é recalculado a partir da máscara validada pelo pesquisador.
+- A tela de resultados diferencia resultado automático preliminar e resultado final validado.
+
+Serviços criados:
+
+- `FerramentaEdicaoService`: carrega a máscara, aplica pincel/borracha, conta pixels, salva a máscara final e calcula o resultado final.
+- `HistoricoEdicaoService`: mantém pilhas simples de estados para desfazer e refazer com limite de memória.
+- `AcaoEdicaoMascara`: registra a intenção da edição manual para facilitar testes e evolução futura.
+
+Limitações da Fase 7:
+
+- A persistência em SQLite da máscara final e do resultado final ainda não foi conectada ao fluxo da tela.
+- A edição é funcional e mínima, sem ferramentas avançadas de seleção, preenchimento, atalhos ou ajustes finos de borda.
+- A exportação real continua reservada para fase posterior.
 
 Limitações conhecidas:
 

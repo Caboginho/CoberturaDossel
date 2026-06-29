@@ -131,6 +131,33 @@ class ArquivoService {
     return caminho;
   }
 
+  /// Gera um caminho seguro para máscara final validada em PNG.
+  ///
+  /// A máscara final é salva em novo arquivo para preservar tanto a imagem
+  /// original quanto a máscara automática preliminar.
+  Future<String> gerarCaminhoSeguroMascaraFinal({
+    required String imagemId,
+    String? id,
+    DateTime? dataHora,
+  }) async {
+    final diretorio = await obterDiretorioMascaras();
+    final marcador = id ?? (dataHora ?? DateTime.now()).microsecondsSinceEpoch;
+    final imagemIdSeguro = _normalizarNomeArquivo(imagemId);
+    final base = 'mascara_final_${imagemIdSeguro}_$marcador.png';
+    var caminho = p.join(diretorio.path, base);
+    var contador = 1;
+
+    while (await File(caminho).exists()) {
+      caminho = p.join(
+        diretorio.path,
+        'mascara_final_${imagemIdSeguro}_${marcador}_$contador.png',
+      );
+      contador++;
+    }
+
+    return caminho;
+  }
+
   /// Monta um caminho futuro para exportação, sem gerar arquivo exportado.
   Future<String> caminhoExportacao(String nomeArquivo) async {
     final diretorio = await obterDiretorioExportacoes();

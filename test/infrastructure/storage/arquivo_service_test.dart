@@ -48,4 +48,22 @@ void main() {
       );
     },
   );
+
+  test(
+    'gera caminho de máscara final em arquivo separado da máscara automática',
+    () async {
+      final caminho = await arquivoService.gerarCaminhoSeguroMascaraFinal(
+        imagemId: 'imagem-123',
+        id: 'mascara-final-123',
+      );
+
+      expect(caminho, contains('mascaras'));
+      expect(caminho, isNot(contains('imagens_originais')));
+      expect(p.extension(caminho), '.png');
+      expect(
+        p.basename(caminho),
+        'mascara_final_imagem-123_mascara-final-123.png',
+      );
+    },
+  );
 }
