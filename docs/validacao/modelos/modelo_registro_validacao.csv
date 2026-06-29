@@ -1,0 +1,2 @@
+id_imagem,nome_arquivo,origem_imagem,licenca_ou_autorizacao,grupo_visual,condicao_ceu,tipo_ambiente,largura,altura,percentual_ceu_automatico,percentual_dossel_automatico,percentual_ceu_final,percentual_dossel_final,diferenca_percentual,tempo_correcao_segundos,principais_erros_segmentacao,observacoes,exportacao_csv,exportacao_json,data_validacao
+,,,,,,,,,,,,,,,,,,,

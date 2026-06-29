@@ -86,3 +86,23 @@ windows/flutter/ephemeral/
 test-results/
 reports/
 lcov.info
+
+# Validacao com imagens reais
+docs/validacao/imagens_reais/*
+docs/validacao/evidencias/brutas/*
+docs/validacao/evidencias/*.jpg
+docs/validacao/evidencias/*.jpeg
+docs/validacao/evidencias/*.png
+docs/validacao/evidencias/*.tif
+docs/validacao/evidencias/*.tiff
+docs/validacao/evidencias/*.heic
+docs/validacao/imagens_exemplo/*.jpg
+docs/validacao/imagens_exemplo/*.jpeg
+docs/validacao/imagens_exemplo/*.png
+docs/validacao/imagens_exemplo/*.tif
+docs/validacao/imagens_exemplo/*.tiff
+docs/validacao/imagens_exemplo/*.heic
+!docs/validacao/imagens_reais/README.md
+!docs/validacao/evidencias/README.md
+!docs/validacao/evidencias/brutas/README.md
+!docs/validacao/imagens_exemplo/README.md

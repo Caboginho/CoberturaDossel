@@ -47,7 +47,7 @@ Regras centrais:
 - Fase 9 - Salvamento completo da análise no SQLite e listagem de análises salvas.
 - Fase 10 - Exportação básica em CSV e JSON.
 - Fase 11 - Revisão técnica, padronização, reforço de testes e preparação para validação funcional.
-- Fase 12 - Validação com imagens.
+- Fase 12 - Estrutura de validação com imagens reais ou licenciadas.
 
 ## Arquitetura
 
@@ -341,6 +341,35 @@ Limitações conhecidas:
 - Inteligência artificial, sincronização em nuvem, autenticação, análise em lote e estatísticas avançadas não fazem parte do MVP atual.
 - No Windows, caminhos muito longos podem causar falhas de build ou de ferramentas. Para validação local, prefira um caminho curto, por exemplo `E:\dev\CoberturaDossel`.
 
+## Validação com Imagens Reais ou Licenciadas
+
+A Fase 12 prepara a estrutura de validação funcional do MVP com imagens reais, próprias, fornecidas por colaboradores ou públicas com licença adequada. Esta fase não baixa imagens, não inclui bases externas no repositório e não altera o aplicativo com funcionalidades grandes. O objetivo é organizar protocolo, modelos de registro, evidências autorizadas e consolidação textual para apoiar TCC, artigo e análise técnica posterior.
+
+Documentos adicionados:
+
+- `docs/validacao/README.md`: visão geral da validação, critérios de inclusão, critérios de exclusão e orientação sobre direitos autorais.
+- `docs/validacao/protocolo_validacao_inicial.md`: protocolo para executar a validação com grupos visuais como céu azul, céu branco ou cinza, céu parcialmente nublado, vegetação densa, galhos finos, folhas claras, flores ou frutos claros e bordas complexas.
+- `docs/validacao/checklist_execucao_validacao.md`: checklist por imagem, com passos e resultado esperado.
+- `docs/validacao/padrao_nomes_arquivos.md`: padrão de nomes para imagens, evidências e exportações.
+- `docs/validacao/modelos/modelo_registro_validacao.csv`: modelo de planilha para registrar resultados automáticos, resultados finais, diferença percentual, tempo de correção e erros observados.
+- `docs/validacao/modelos/modelo_registro_validacao.json`: modelo estruturado equivalente para registros individuais.
+- `docs/validacao/modelos/tabela_resultados_tcc.md`: modelo de tabela consolidada para uso acadêmico.
+- `docs/validacao/modelos/secao_validacao_tcc.md`: texto-base editável para a seção de validação do TCC.
+- `docs/validacao/modelos/exemplo_registro_validacao_preenchido.csv`: exemplo fictício para testar o modelo e o consolidador.
+
+Ferramenta de apoio:
+
+- `tools/validacao/consolidar_validacao.dart`: consolida um CSV de validação em tabela Markdown por grupo visual. O script trabalha apenas com registros textuais e não acessa, copia ou altera imagens originais, máscaras automáticas ou máscaras finais.
+
+Cuidados mantidos:
+
+- Imagens reais devem ficar fora do Git quando não houver autorização explícita para versionamento.
+- A pasta local sugerida para imagens reais é `docs/validacao/imagens_reais/`, ignorada pelo `.gitignore`.
+- Evidências brutas devem ficar em `docs/validacao/evidencias/brutas/`, também ignorada pelo `.gitignore`.
+- Devem ser versionados apenas protocolos, modelos, exemplos textuais e resultados consolidados que não exponham material protegido nem dados sensíveis.
+- A validação compara resultado automático preliminar e resultado final validado pelo pesquisador.
+- O MVP continua sem inteligência artificial, sem medição direta de LAI e sem PDF real.
+
 ## Comandos
 
 Instalar dependências:
@@ -367,8 +396,14 @@ Executar o aplicativo base:
 flutter run
 ```
 
+Consolidar um CSV de validação em tabela Markdown:
+
+```bash
+dart run tools/validacao/consolidar_validacao.dart docs/validacao/modelos/exemplo_registro_validacao_preenchido.csv docs/validacao/resultados/resumo_validacao_exemplo.md
+```
+
 Gerar build web de validação em caminho temporário:
 
 ```bash
-flutter build web --debug --no-pub --no-wasm-dry-run --output %TEMP%\cobertura_dossel_web_phase11
+flutter build web --debug --no-pub --no-wasm-dry-run --output %TEMP%\cobertura_dossel_web_phase12
 ```

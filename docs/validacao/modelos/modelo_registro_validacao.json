@@ -1,0 +1,38 @@
+{
+  "imagem": {
+    "idImagem": "CD_CEU_AZUL_001",
+    "nomeArquivo": "CD_CEU_AZUL_001_CAMPO.jpg",
+    "largura": 0,
+    "altura": 0
+  },
+  "origem": {
+    "origemImagem": "campo",
+    "licencaOuAutorizacao": "imagem propria autorizada"
+  },
+  "condicoes": {
+    "grupoVisual": "ceu_azul",
+    "condicaoCeu": "azul",
+    "tipoAmbiente": "floresta"
+  },
+  "resultadoAutomatico": {
+    "percentualCeu": 0.0,
+    "percentualDossel": 0.0
+  },
+  "resultadoFinal": {
+    "percentualCeu": 0.0,
+    "percentualDossel": 0.0
+  },
+  "comparacao": {
+    "diferencaPercentual": 0.0,
+    "tempoCorrecaoSegundos": 0
+  },
+  "observacoes": {
+    "principaisErrosSegmentacao": "[preencher apos validacao]",
+    "observacoesGerais": "[preencher apos validacao]",
+    "dataValidacao": "AAAA-MM-DD"
+  },
+  "arquivosExportados": {
+    "exportacaoCsv": "[caminho ou nome do CSV exportado]",
+    "exportacaoJson": "[caminho ou nome do JSON exportado]"
+  }
+}
