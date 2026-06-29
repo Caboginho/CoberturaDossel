@@ -45,7 +45,7 @@ Regras centrais:
 - Fase 7 - Editor manual mínimo da máscara, com pintura, desfazer/refazer e validação final.
 - Fase 8 - Consolidação do cálculo e da apresentação dos resultados.
 - Fase 9 - Salvamento completo da análise no SQLite e listagem de análises salvas.
-- Fase 10 - Exportação básica.
+- Fase 10 - Exportação básica em CSV e JSON.
 - Fase 11 - Testes e validação funcional.
 - Fase 12 - Validação com imagens.
 
@@ -129,7 +129,7 @@ Telas criadas na Fase 3:
 - `AnalisesSalvasPage`
 - `ExportacaoPage`
 
-A interface reforça que o resultado automático é preliminar, que o resultado final depende da máscara validada pelo pesquisador e que a imagem original não deve ser alterada. Câmera e galeria foram conectadas na Fase 4. Segmentação de imagem, editor real de máscara e exportação real ainda não foram implementados.
+A interface reforça que o resultado automático é preliminar, que o resultado final depende da máscara validada pelo pesquisador e que a imagem original não deve ser alterada. Câmera, galeria, segmentação inicial, editor mínimo, salvamento local e exportação básica em CSV/JSON já foram conectados ao fluxo do MVP.
 
 ## Entrada de Imagem
 
@@ -216,7 +216,7 @@ Limitações da Fase 7:
 
 - A persistência em SQLite da máscara final e do resultado final ainda não foi conectada ao fluxo da tela.
 - A edição é funcional e mínima, sem ferramentas avançadas de seleção, preenchimento, atalhos ou ajustes finos de borda.
-- A exportação real continua reservada para fase posterior.
+- A exportação básica em CSV/JSON foi implementada na Fase 10; PDF e relatórios avançados continuam reservados para evolução posterior.
 
 ## Resultados da Análise
 
@@ -274,12 +274,38 @@ Cuidados mantidos:
 - A máscara final permanece em arquivo separado.
 - O sistema continua calculando céu visível e dossel estimado, sem medir LAI diretamente.
 
+## Exportação de Resultados
+
+A Fase 10 implementa a exportação básica dos resultados da análise em CSV e JSON. A tela `ExportacaoPage` permite selecionar o formato, revisar um resumo da análise e gerar um arquivo no diretório interno de exportações.
+
+Serviços e modelos adicionados:
+
+- `DadosExportacaoAnalise`: organiza análise, imagem, máscaras, resultados, metadados e formato escolhido.
+- `ResultadoExportacao`: informa sucesso, formato, caminho do arquivo, mensagem e data de exportação.
+- `ExportacaoService`: gera conteúdo CSV, gera JSON formatado, salva o arquivo exportado e registra a exportação quando a análise já existe no SQLite.
+
+Comportamento implementado:
+
+- O CSV usa cabeçalho simples, sem acentos, compatível com planilhas e scripts.
+- O JSON organiza os dados em `analise`, `imagem`, `mascaraAutomatica`, `mascaraFinal`, `resultadoAutomatico`, `resultadoFinal`, `metadados` e `exportacao`.
+- O botão `Exportar resultado` na tela de resultados encaminha os dados reais da análise atual para a tela de exportação.
+- Arquivos CSV e JSON são gerados como novos arquivos no diretório `exportacoes`.
+- PDF aparece apenas como funcionalidade futura e ainda não é gerado.
+
+Cuidados mantidos:
+
+- A exportação não altera a imagem original.
+- A exportação não sobrescreve a máscara automática.
+- A exportação não sobrescreve a máscara final validada.
+- O banco e os arquivos exportados continuam armazenando caminhos, metadados e resultados, nunca blobs de imagem nem pixels individuais.
+- Os arquivos exportados servem para análise posterior em planilhas ou scripts.
+
 Limitações conhecidas:
 
 - A heurística pode errar em folhas claras, flores claras, céu nublado, reflexos e bordas complexas.
 - O resultado não mede LAI diretamente nem representa cobertura real absoluta do dossel.
 - Imagens muito grandes podem exigir otimizações futuras, sempre preservando a imagem original.
-- A reabertura completa de uma análise salva e a exportação real ficam para fases posteriores.
+- A reabertura completa de uma análise salva, a exportação PDF real e uma tela de histórico de exportações ficam para fases posteriores.
 
 ## Comandos
 

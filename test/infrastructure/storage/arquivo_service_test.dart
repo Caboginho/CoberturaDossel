@@ -66,4 +66,43 @@ void main() {
       );
     },
   );
+
+  test('gera caminho seguro para CSV no diretório de exportações', () async {
+    final caminho = await arquivoService.gerarCaminhoSeguroExportacaoCsv(
+      analiseId: 'analise-123',
+      dataHora: DateTime(2026, 6, 29, 14, 30),
+    );
+
+    expect(caminho, contains('exportacoes'));
+    expect(caminho, isNot(contains('imagens_originais')));
+    expect(caminho, isNot(contains('mascaras')));
+    expect(p.extension(caminho), '.csv');
+    expect(
+      p.basename(caminho),
+      'exportacao_analise-123_20260629_143000_000000.csv',
+    );
+  });
+
+  test('gera caminho seguro para JSON no diretório de exportações', () async {
+    final caminho = await arquivoService.gerarCaminhoSeguroExportacaoJson(
+      analiseId: 'analise-123',
+      dataHora: DateTime(2026, 6, 29, 14, 30),
+    );
+
+    expect(caminho, contains('exportacoes'));
+    expect(p.extension(caminho), '.json');
+    expect(
+      p.basename(caminho),
+      'exportacao_analise-123_20260629_143000_000000.json',
+    );
+  });
+
+  test('garante diretório de exportações separado', () async {
+    final diretorioExportacoes = await arquivoService
+        .obterDiretorioExportacoes();
+    final diretorioMascaras = await arquivoService.obterDiretorioMascaras();
+
+    expect(diretorioExportacoes.path, isNot(diretorioMascaras.path));
+    expect(p.basename(diretorioExportacoes.path), 'exportacoes');
+  });
 }

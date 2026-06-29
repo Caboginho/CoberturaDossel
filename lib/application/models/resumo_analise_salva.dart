@@ -29,6 +29,14 @@ class ResumoAnaliseSalva {
     return _primeiroResultado(TipoMascara.automatica);
   }
 
+  Mascara? get mascaraFinal {
+    return _primeiraMascara(TipoMascara.finalValidada);
+  }
+
+  Mascara? get mascaraAutomatica {
+    return _primeiraMascara(TipoMascara.automatica);
+  }
+
   ResultadoAnalise? get resultadoParaLista =>
       resultadoFinal ?? resultadoAutomatico;
 
@@ -38,6 +46,15 @@ class ResumoAnaliseSalva {
     for (final resultado in resultados) {
       if (resultado.tipoMascara == tipoMascara) {
         return resultado;
+      }
+    }
+    return null;
+  }
+
+  Mascara? _primeiraMascara(TipoMascara tipoMascara) {
+    for (final mascara in mascaras) {
+      if (mascara.tipo == tipoMascara) {
+        return mascara;
       }
     }
     return null;

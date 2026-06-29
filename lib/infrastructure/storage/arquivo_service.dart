@@ -164,10 +164,77 @@ class ArquivoService {
     return p.join(diretorio.path, nomeArquivo);
   }
 
+  /// Gera um caminho seguro para arquivo CSV de exportacao.
+  ///
+  /// O arquivo exportado sempre fica separado da imagem original e das mascaras.
+  /// Caso um arquivo com o mesmo nome exista, um contador e acrescentado para
+  /// evitar sobrescrita.
+  Future<String> gerarCaminhoSeguroExportacaoCsv({
+    required String analiseId,
+    DateTime? dataHora,
+  }) {
+    return _gerarCaminhoSeguroExportacao(
+      analiseId: analiseId,
+      extensao: '.csv',
+      dataHora: dataHora,
+    );
+  }
+
+  /// Gera um caminho seguro para arquivo JSON de exportacao.
+  ///
+  /// A exportacao JSON e um novo arquivo de texto e nao altera arquivos de
+  /// imagem, mascara automatica ou mascara final validada.
+  Future<String> gerarCaminhoSeguroExportacaoJson({
+    required String analiseId,
+    DateTime? dataHora,
+  }) {
+    return _gerarCaminhoSeguroExportacao(
+      analiseId: analiseId,
+      extensao: '.json',
+      dataHora: dataHora,
+    );
+  }
+
   Future<Directory> _criarSubdiretorio(String nome) async {
     final raiz = await _obterDiretorioRaiz();
     final diretorio = Directory(p.join(raiz.path, nome));
     return diretorio.create(recursive: true);
+  }
+
+  Future<String> _gerarCaminhoSeguroExportacao({
+    required String analiseId,
+    required String extensao,
+    DateTime? dataHora,
+  }) async {
+    final diretorio = await obterDiretorioExportacoes();
+    final analiseIdSeguro = _normalizarNomeArquivo(analiseId);
+    final marcador = _formatarTimestampArquivo(dataHora ?? DateTime.now());
+    final base = 'exportacao_${analiseIdSeguro}_$marcador$extensao';
+    var caminho = p.join(diretorio.path, base);
+    var contador = 1;
+
+    while (await File(caminho).exists()) {
+      caminho = p.join(
+        diretorio.path,
+        'exportacao_${analiseIdSeguro}_${marcador}_$contador$extensao',
+      );
+      contador++;
+    }
+
+    return caminho;
+  }
+
+  String _formatarTimestampArquivo(DateTime dataHora) {
+    String doisDigitos(int valor) => valor.toString().padLeft(2, '0');
+    String seisDigitos(int valor) => valor.toString().padLeft(6, '0');
+
+    return '${dataHora.year}'
+        '${doisDigitos(dataHora.month)}'
+        '${doisDigitos(dataHora.day)}_'
+        '${doisDigitos(dataHora.hour)}'
+        '${doisDigitos(dataHora.minute)}'
+        '${doisDigitos(dataHora.second)}_'
+        '${seisDigitos(dataHora.microsecond)}';
   }
 
   String _normalizarNomeArquivo(String nome) {

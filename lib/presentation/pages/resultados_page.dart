@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../application/application.dart';
+import '../../domain/domain.dart';
 import '../routes/rotas_app.dart';
 import '../widgets/botao_primario.dart';
 import '../widgets/cartao_informativo.dart';
@@ -44,7 +45,11 @@ class ResultadosPage extends StatelessWidget {
         BotaoPrimario(
           rotulo: 'Exportar resultado',
           icone: Icons.ios_share,
-          aoPressionar: () => Navigator.pushNamed(context, RotasApp.exportacao),
+          aoPressionar: () => Navigator.pushNamed(
+            context,
+            RotasApp.exportacao,
+            arguments: _criarDadosExportacao(argumento),
+          ),
         ),
       ],
     );
@@ -73,6 +78,34 @@ class ResultadosPage extends StatelessWidget {
 
     if (argumento is ResultadoProcessamentoImagem) {
       return _resultadoAnaliseService.criarResumoDeProcessamento(argumento);
+    }
+
+    return null;
+  }
+
+  DadosExportacaoAnalise? _criarDadosExportacao(Object? argumento) {
+    if (argumento is DadosValidacaoAnalise) {
+      final validacao = argumento.validacao;
+      return DadosExportacaoAnalise(
+        analise: argumento.analise,
+        imagem: validacao.imagem,
+        mascaraAutomatica: validacao.mascaraAutomatica,
+        mascaraFinal: validacao.mascaraFinal,
+        resultadoAutomatico: validacao.resultadoAutomatico,
+        resultadoFinal: validacao.resultadoFinal,
+        formatoExportacao: FormatoExportacao.csv,
+      );
+    }
+
+    if (argumento is DadosProcessamentoAnalise) {
+      final processamento = argumento.processamento;
+      return DadosExportacaoAnalise(
+        analise: argumento.analise,
+        imagem: processamento.imagem,
+        mascaraAutomatica: processamento.mascaraAutomatica,
+        resultadoAutomatico: processamento.resultadoAutomatico,
+        formatoExportacao: FormatoExportacao.csv,
+      );
     }
 
     return null;
