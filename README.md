@@ -44,7 +44,7 @@ Regras centrais:
 - Fase 6 - Visualização da imagem original e da máscara automática, com modos de comparação e sobreposição.
 - Fase 7 - Editor manual mínimo da máscara, com pintura, desfazer/refazer e validação final.
 - Fase 8 - Consolidação do cálculo e da apresentação dos resultados.
-- Fase 9 - Salvamento da análise.
+- Fase 9 - Salvamento completo da análise no SQLite e listagem de análises salvas.
 - Fase 10 - Exportação básica.
 - Fase 11 - Testes e validação funcional.
 - Fase 12 - Validação com imagens.
@@ -244,11 +244,42 @@ Cuidados mantidos:
 - O sistema calcula céu visível e dossel estimado; não mede LAI diretamente.
 - A persistência completa da análise, imagem, máscaras e resultados no SQLite fica reservada para a Fase 9.
 
+## Salvamento da Análise
+
+A Fase 9 implementa o salvamento completo da análise no SQLite. O fluxo passa a preservar a entidade `Analise` desde a tela inicial, associando imagem original, máscara automática, resultado automático, máscara final quando existir e resultado final validado.
+
+Serviços e modelos adicionados:
+
+- `DadosSalvamentoAnalise`: organiza análise, imagem, máscaras, resultados e metadados para persistência.
+- `ResultadoSalvamentoAnalise`: informa sucesso, mensagem, identificador da análise e data do salvamento.
+- `SalvamentoAnaliseService`: salva a análise completa em transação SQLite.
+- `ConsultaAnaliseService`: lista análises salvas e busca dados associados por `analiseId`.
+- `ResumoAnaliseSalva`: resume análise, imagem, máscaras e resultados para a lista.
+
+Comportamento implementado:
+
+- O botão `Salvar análise` grava dados reais no SQLite quando a tela de resultados recebe uma análise criada no fluxo.
+- Análises sem validação final podem ser salvas com resultado automático preliminar.
+- Análises com máscara final são salvas com `statusValidacao` verdadeiro.
+- A tela `Análises salvas` consulta o banco e lista nome, data de atualização, status de validação e percentual de dossel disponível.
+- A reabertura completa da análise salva fica preparada, mas ainda não implementada.
+
+Cuidados mantidos:
+
+- Imagens e máscaras são mantidas como arquivos locais separados.
+- O banco armazena metadados, caminhos de arquivos e resultados, nunca blobs de imagem.
+- Pixels individuais não são armazenados no SQLite.
+- A imagem original não é alterada.
+- A máscara automática não é sobrescrita.
+- A máscara final permanece em arquivo separado.
+- O sistema continua calculando céu visível e dossel estimado, sem medir LAI diretamente.
+
 Limitações conhecidas:
 
 - A heurística pode errar em folhas claras, flores claras, céu nublado, reflexos e bordas complexas.
 - O resultado não mede LAI diretamente nem representa cobertura real absoluta do dossel.
 - Imagens muito grandes podem exigir otimizações futuras, sempre preservando a imagem original.
+- A reabertura completa de uma análise salva e a exportação real ficam para fases posteriores.
 
 ## Comandos
 

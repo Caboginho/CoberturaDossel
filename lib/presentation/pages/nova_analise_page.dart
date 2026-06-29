@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../domain/domain.dart';
 import '../routes/rotas_app.dart';
 import '../widgets/botao_primario.dart';
 import '../widgets/cartao_informativo.dart';
@@ -7,8 +8,8 @@ import '../widgets/pagina_base.dart';
 
 /// Tela inicial de cadastro de uma nova análise.
 ///
-/// A Fase 3 mantém os dados apenas no formulário. O salvamento definitivo será
-/// conectado aos repositórios em fase posterior.
+/// A Fase 9 preserva nome e observações em uma entidade [Analise] que segue pelo
+/// fluxo até o salvamento definitivo no SQLite.
 class NovaAnalisePage extends StatefulWidget {
   const NovaAnalisePage({super.key});
 
@@ -76,7 +77,20 @@ class _NovaAnalisePageState extends State<NovaAnalisePage> {
           icone: Icons.arrow_forward,
           aoPressionar: () {
             if (_formKey.currentState!.validate()) {
-              Navigator.pushNamed(context, RotasApp.escolherImagem);
+              final agora = DateTime.now();
+              final analise = Analise(
+                id: 'analise_${agora.microsecondsSinceEpoch}',
+                nome: _nomeController.text.trim(),
+                dataCriacao: agora,
+                dataAtualizacao: agora,
+                observacoes: _observacoesController.text.trim(),
+                versaoAlgoritmo: 'regras_visuais_mvp',
+              );
+              Navigator.pushNamed(
+                context,
+                RotasApp.escolherImagem,
+                arguments: analise,
+              );
             }
           },
         ),

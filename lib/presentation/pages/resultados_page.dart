@@ -15,11 +15,13 @@ import '../widgets/titulo_secao.dart';
 /// dados de processamento ou validação.
 class ResultadosPage extends StatelessWidget {
   const ResultadosPage({
+    this.salvamentoAnaliseService,
     ResultadoAnaliseService resultadoAnaliseService =
         const ResultadoAnaliseService(),
     super.key,
   }) : _resultadoAnaliseService = resultadoAnaliseService;
 
+  final SalvamentoAnaliseService? salvamentoAnaliseService;
   final ResultadoAnaliseService _resultadoAnaliseService;
 
   @override
@@ -37,13 +39,7 @@ class ResultadosPage extends StatelessWidget {
         BotaoPrimario(
           rotulo: 'Salvar análise',
           icone: Icons.save_outlined,
-          aoPressionar: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Salvamento será conectado na Fase 9.'),
-              ),
-            );
-          },
+          aoPressionar: () => _salvarAnalise(context, argumento),
         ),
         BotaoPrimario(
           rotulo: 'Exportar resultado',
@@ -59,12 +55,75 @@ class ResultadosPage extends StatelessWidget {
       return argumento;
     }
 
+    if (argumento is DadosValidacaoAnalise) {
+      return _resultadoAnaliseService.criarResumoDeValidacao(
+        argumento.validacao,
+      );
+    }
+
     if (argumento is ResultadoValidacaoMascara) {
       return _resultadoAnaliseService.criarResumoDeValidacao(argumento);
     }
 
+    if (argumento is DadosProcessamentoAnalise) {
+      return _resultadoAnaliseService.criarResumoDeProcessamento(
+        argumento.processamento,
+      );
+    }
+
     if (argumento is ResultadoProcessamentoImagem) {
       return _resultadoAnaliseService.criarResumoDeProcessamento(argumento);
+    }
+
+    return null;
+  }
+
+  Future<void> _salvarAnalise(BuildContext context, Object? argumento) async {
+    final dados = _criarDadosSalvamento(argumento);
+    if (dados == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Não há dados reais de análise para salvar nesta tela.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final servico = salvamentoAnaliseService ?? SalvamentoAnaliseService();
+    final resultado = await servico.salvarAnalise(dados);
+
+    if (!context.mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(resultado.mensagem)));
+  }
+
+  DadosSalvamentoAnalise? _criarDadosSalvamento(Object? argumento) {
+    if (argumento is DadosValidacaoAnalise) {
+      final validacao = argumento.validacao;
+      return DadosSalvamentoAnalise(
+        analise: argumento.analise,
+        imagem: validacao.imagem,
+        mascaraAutomatica: validacao.mascaraAutomatica,
+        mascaraFinal: validacao.mascaraFinal,
+        resultadoAutomatico: validacao.resultadoAutomatico,
+        resultadoFinal: validacao.resultadoFinal,
+      );
+    }
+
+    if (argumento is DadosProcessamentoAnalise) {
+      final processamento = argumento.processamento;
+      return DadosSalvamentoAnalise(
+        analise: argumento.analise,
+        imagem: processamento.imagem,
+        mascaraAutomatica: processamento.mascaraAutomatica,
+        resultadoAutomatico: processamento.resultadoAutomatico,
+      );
     }
 
     return null;

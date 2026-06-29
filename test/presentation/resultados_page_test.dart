@@ -4,7 +4,11 @@ import 'package:cobertura_dossel/presentation/pages/resultados_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../data/banco_teste_utils.dart';
+
 void main() {
+  setUpAll(inicializarBancoFfiParaTestes);
+
   testWidgets('exibe resultado automático preliminar com dados reais', (
     tester,
   ) async {
@@ -74,18 +78,81 @@ void main() {
     expect(find.text('48,0%'), findsNothing);
     expect(find.text('52,0%'), findsNothing);
   });
+
+  testWidgets('exibe botão Salvar análise', (tester) async {
+    await _montarResultadosPage(
+      tester,
+      argumento: DadosProcessamentoAnalise(
+        analise: _criarAnalise(statusValidacao: false),
+        processamento: _criarProcessamentoAutomatico(),
+      ),
+    );
+
+    await _rolarAteTexto(tester, 'Salvar análise');
+
+    expect(find.text('Salvar análise'), findsOneWidget);
+  });
+
+  testWidgets('mostra mensagem de sucesso ao salvar análise', (tester) async {
+    final salvamentoFake = _SalvamentoAnaliseFake();
+
+    await _montarResultadosPage(
+      tester,
+      argumento: DadosProcessamentoAnalise(
+        analise: _criarAnalise(statusValidacao: false),
+        processamento: _criarProcessamentoAutomatico(),
+      ),
+      salvamentoAnaliseService: salvamentoFake,
+    );
+
+    await _rolarAteTexto(tester, 'Salvar análise');
+    await tester.tap(find.text('Salvar análise'));
+    await tester.pump();
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+    });
+    await tester.pump();
+
+    expect(
+      find.text('Análise salva sem validação final da máscara.'),
+      findsOneWidget,
+    );
+    expect(salvamentoFake.dadosRecebidos, isNotNull);
+  });
+}
+
+class _SalvamentoAnaliseFake extends SalvamentoAnaliseService {
+  _SalvamentoAnaliseFake() : super(bancoDadosLocal: criarBancoEmMemoria());
+
+  DadosSalvamentoAnalise? dadosRecebidos;
+
+  @override
+  Future<ResultadoSalvamentoAnalise> salvarAnalise(
+    DadosSalvamentoAnalise dados,
+  ) async {
+    dadosRecebidos = dados;
+    return ResultadoSalvamentoAnalise(
+      sucesso: true,
+      analiseId: dados.analise.id,
+      mensagem: 'Análise salva sem validação final da máscara.',
+      dataSalvamento: DateTime(2026, 6, 29, 12),
+    );
+  }
 }
 
 Future<void> _montarResultadosPage(
   WidgetTester tester, {
   required Object argumento,
+  SalvamentoAnaliseService? salvamentoAnaliseService,
 }) {
   return tester.pumpWidget(
     MaterialApp(
       onGenerateRoute: (_) {
         return MaterialPageRoute<void>(
           settings: RouteSettings(arguments: argumento),
-          builder: (_) => const ResultadosPage(),
+          builder: (_) => ResultadosPage(
+            salvamentoAnaliseService: salvamentoAnaliseService,
+          ),
         );
       },
     ),
@@ -178,5 +245,18 @@ Imagem _criarImagem() {
     altura: 10,
     formato: 'png',
     origem: OrigemImagem.galeria,
+  );
+}
+
+Analise _criarAnalise({required bool statusValidacao}) {
+  final dataHora = DateTime(2026, 6, 29, 9);
+  return Analise(
+    id: 'analise-teste',
+    nome: 'Análise de teste',
+    dataCriacao: dataHora,
+    dataAtualizacao: dataHora,
+    observacoes: 'Criada no teste de widget.',
+    versaoAlgoritmo: 'regras_visuais_mvp',
+    statusValidacao: statusValidacao,
   );
 }

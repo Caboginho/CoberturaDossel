@@ -29,9 +29,13 @@ class _AnalisePageState extends State<AnalisePage> {
   @override
   Widget build(BuildContext context) {
     final argumento = ModalRoute.of(context)?.settings.arguments;
-    final resultadoProcessamento = argumento is ResultadoProcessamentoImagem
+    final dadosProcessamento = argumento is DadosProcessamentoAnalise
         ? argumento
         : null;
+    final resultadoProcessamento =
+        dadosProcessamento?.processamento ??
+        (argumento is ResultadoProcessamentoImagem ? argumento : null);
+    final argumentoFluxo = dadosProcessamento ?? resultadoProcessamento;
 
     return PaginaBase(
       titulo: 'Análise',
@@ -88,7 +92,7 @@ class _AnalisePageState extends State<AnalisePage> {
           aoPressionar: () => Navigator.pushNamed(
             context,
             RotasApp.editorMascara,
-            arguments: resultadoProcessamento,
+            arguments: argumentoFluxo,
           ),
         ),
         BotaoPrimario(
@@ -97,7 +101,7 @@ class _AnalisePageState extends State<AnalisePage> {
           aoPressionar: () => Navigator.pushNamed(
             context,
             RotasApp.resultados,
-            arguments: resultadoProcessamento,
+            arguments: argumentoFluxo,
           ),
         ),
       ],

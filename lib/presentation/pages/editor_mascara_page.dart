@@ -36,6 +36,7 @@ class _EditorMascaraPageState extends State<EditorMascaraPage> {
   late final FerramentaEdicaoService _ferramentaEdicaoService;
   late final HistoricoEdicaoService _historicoEdicaoService;
 
+  Analise? _analise;
   ResultadoProcessamentoImagem? _resultadoProcessamento;
   img.Image? _mascaraEditada;
   Uint8List? _bytesMascaraEditada;
@@ -66,7 +67,11 @@ class _EditorMascaraPageState extends State<EditorMascaraPage> {
 
     _argumentosLidos = true;
     final argumento = ModalRoute.of(context)?.settings.arguments;
-    if (argumento is ResultadoProcessamentoImagem) {
+    if (argumento is DadosProcessamentoAnalise) {
+      _analise = argumento.analise;
+      _resultadoProcessamento = argumento.processamento;
+      _carregarMascara(argumento.processamento);
+    } else if (argumento is ResultadoProcessamentoImagem) {
       _resultadoProcessamento = argumento;
       _carregarMascara(argumento);
     }
@@ -401,7 +406,12 @@ class _EditorMascaraPageState extends State<EditorMascaraPage> {
       Navigator.pushNamed(
         context,
         RotasApp.resultados,
-        arguments: resultadoValidacao,
+        arguments: _analise == null
+            ? resultadoValidacao
+            : DadosValidacaoAnalise(
+                analise: _analiseValidada(_analise!),
+                validacao: resultadoValidacao,
+              ),
       );
     } on Object catch (erro) {
       if (!mounted) {
@@ -422,6 +432,18 @@ class _EditorMascaraPageState extends State<EditorMascaraPage> {
   void _definirMascaraEditada(img.Image mascara) {
     _mascaraEditada = mascara;
     _bytesMascaraEditada = Uint8List.fromList(img.encodePng(mascara));
+  }
+
+  Analise _analiseValidada(Analise analise) {
+    return Analise(
+      id: analise.id,
+      nome: analise.nome,
+      dataCriacao: analise.dataCriacao,
+      dataAtualizacao: DateTime.now(),
+      observacoes: analise.observacoes,
+      versaoAlgoritmo: analise.versaoAlgoritmo,
+      statusValidacao: true,
+    );
   }
 }
 

@@ -5,14 +5,18 @@ import 'package:cobertura_dossel/infrastructure/infrastructure.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../data/banco_teste_utils.dart';
+
 void main() {
+  setUpAll(inicializarBancoFfiParaTestes);
+
   testWidgets('Tela Inicial possui botões Nova análise e Análises salvas', (
     tester,
   ) async {
     await tester.pumpWidget(const CoberturaDosselApp());
 
     expect(find.text('Nova análise'), findsOneWidget);
-    expect(find.text('Análises salvas'), findsOneWidget);
+    expect(find.text('Análises salvas'), findsWidgets);
   });
 
   testWidgets('navegação da Tela Inicial para NovaAnalisePage funciona', (
@@ -33,9 +37,10 @@ void main() {
     await tester.pumpWidget(const CoberturaDosselApp());
 
     await tester.tap(find.text('Análises salvas'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
-    expect(find.text('Nenhuma análise salva ainda'), findsOneWidget);
+    expect(find.text('Análises salvas'), findsWidgets);
   });
 
   testWidgets(

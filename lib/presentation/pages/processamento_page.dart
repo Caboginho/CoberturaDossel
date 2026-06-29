@@ -37,7 +37,9 @@ class _ProcessamentoPageState extends State<ProcessamentoPage> {
   @override
   Widget build(BuildContext context) {
     final argumento = ModalRoute.of(context)?.settings.arguments;
-    final imagemRecebida = argumento is Imagem ? argumento : null;
+    final dadosImagem = argumento is DadosImagemAnalise ? argumento : null;
+    final imagemRecebida =
+        dadosImagem?.imagem ?? (argumento is Imagem ? argumento : null);
 
     return PaginaBase(
       titulo: 'Processamento',
@@ -92,7 +94,12 @@ class _ProcessamentoPageState extends State<ProcessamentoPage> {
             aoPressionar: () => Navigator.pushNamed(
               context,
               RotasApp.analise,
-              arguments: _resultadoProcessamento,
+              arguments: dadosImagem == null
+                  ? _resultadoProcessamento
+                  : DadosProcessamentoAnalise(
+                      analise: dadosImagem.analise,
+                      processamento: _resultadoProcessamento!,
+                    ),
             ),
           ),
         ],

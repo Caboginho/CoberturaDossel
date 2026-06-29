@@ -36,7 +36,9 @@ class _EscolherImagemPageState extends State<EscolherImagemPage> {
 
   ImagemPreparada? _imagemPreparada;
   String? _mensagem;
+  Analise? _analise;
   bool _carregando = false;
+  bool _argumentosLidos = false;
 
   @override
   void initState() {
@@ -44,6 +46,19 @@ class _EscolherImagemPageState extends State<EscolherImagemPage> {
     _entradaImagemService =
         widget.entradaImagemService ?? ImagePickerEntradaImagemService();
     _imagemService = widget.imagemService ?? ImagemService();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_argumentosLidos) {
+      return;
+    }
+    _argumentosLidos = true;
+    final argumento = ModalRoute.of(context)?.settings.arguments;
+    if (argumento is Analise) {
+      _analise = argumento;
+    }
   }
 
   @override
@@ -95,7 +110,12 @@ class _EscolherImagemPageState extends State<EscolherImagemPage> {
             aoPressionar: () => Navigator.pushNamed(
               context,
               RotasApp.processamento,
-              arguments: _imagemPreparada!.imagem,
+              arguments: _analise == null
+                  ? _imagemPreparada!.imagem
+                  : DadosImagemAnalise(
+                      analise: _analise!,
+                      imagem: _imagemPreparada!.imagem,
+                    ),
             ),
           ),
         ],
@@ -138,7 +158,7 @@ class _EscolherImagemPageState extends State<EscolherImagemPage> {
       final preparada = await _imagemService.prepararImagemOriginal(
         arquivoExterno: resultado.arquivo!,
         origem: origem,
-        analiseId: 'analise_em_memoria',
+        analiseId: _analise?.id ?? 'analise_em_memoria',
       );
 
       if (!mounted) {
