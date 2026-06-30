@@ -60,6 +60,26 @@ void main() {
     expect(resumo.resultadoFinal, isNotNull);
   });
 
+  test('busca análise completa por id para reabertura do fluxo', () async {
+    final dados = _criarDadosSalvamento(
+      analiseId: 'analise-reaberta',
+      possuiFinal: true,
+    );
+    await salvamentoAnaliseService.salvarAnalise(dados);
+
+    final reaberta = await consultaAnaliseService.buscarAnaliseCompletaPorId(
+      dados.analise.id,
+    );
+
+    expect(reaberta.analise.id, dados.analise.id);
+    expect(reaberta.imagem.id, dados.imagem.id);
+    expect(reaberta.mascaraAutomatica.id, dados.mascaraAutomatica.id);
+    expect(reaberta.mascaraFinal!.id, dados.mascaraFinal!.id);
+    expect(reaberta.resultadoAutomatico.id, dados.resultadoAutomatico.id);
+    expect(reaberta.resultadoFinal!.id, dados.resultadoFinal!.id);
+    expect(reaberta.possuiResultadoFinal, isTrue);
+  });
+
   test('diferencia análise validada e não validada', () async {
     await salvamentoAnaliseService.salvarAnalise(
       _criarDadosSalvamento(analiseId: 'analise-parcial', possuiFinal: false),

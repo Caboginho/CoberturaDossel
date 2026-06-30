@@ -93,4 +93,9 @@ class _EntradaImagemCanceladaService implements EntradaImagemService {
   Future<ResultadoEntradaImagem> importarDaGaleria() async {
     return ResultadoEntradaImagem.cancelado();
   }
+
+  @override
+  Future<ResultadoEntradaImagem> recuperarImagemPerdida() async {
+    return ResultadoEntradaImagem.semDadosPerdidos();
+  }
 }

@@ -66,6 +66,16 @@ class ResultadosPage extends StatelessWidget {
       );
     }
 
+    if (argumento is DadosAnaliseReaberta) {
+      final validacao = argumento.validacao;
+      if (validacao != null) {
+        return _resultadoAnaliseService.criarResumoDeValidacao(validacao);
+      }
+      return _resultadoAnaliseService.criarResumoDeProcessamento(
+        argumento.processamento,
+      );
+    }
+
     if (argumento is ResultadoValidacaoMascara) {
       return _resultadoAnaliseService.criarResumoDeValidacao(argumento);
     }
@@ -93,6 +103,19 @@ class ResultadosPage extends StatelessWidget {
         mascaraFinal: validacao.mascaraFinal,
         resultadoAutomatico: validacao.resultadoAutomatico,
         resultadoFinal: validacao.resultadoFinal,
+        formatoExportacao: FormatoExportacao.csv,
+      );
+    }
+
+    if (argumento is DadosAnaliseReaberta) {
+      return DadosExportacaoAnalise(
+        analise: argumento.analise,
+        imagem: argumento.imagem,
+        mascaraAutomatica: argumento.mascaraAutomatica,
+        mascaraFinal: argumento.mascaraFinal,
+        resultadoAutomatico: argumento.resultadoAutomatico,
+        resultadoFinal: argumento.resultadoFinal,
+        metadadosAnalise: argumento.metadadosAnalise,
         formatoExportacao: FormatoExportacao.csv,
       );
     }
@@ -131,6 +154,10 @@ class ResultadosPage extends StatelessWidget {
       return;
     }
 
+    if (resultado.sucesso) {
+      AnaliseEmAndamentoService.instancia.limpar();
+    }
+
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(resultado.mensagem)));
@@ -146,6 +173,18 @@ class ResultadosPage extends StatelessWidget {
         mascaraFinal: validacao.mascaraFinal,
         resultadoAutomatico: validacao.resultadoAutomatico,
         resultadoFinal: validacao.resultadoFinal,
+      );
+    }
+
+    if (argumento is DadosAnaliseReaberta) {
+      return DadosSalvamentoAnalise(
+        analise: argumento.analise,
+        imagem: argumento.imagem,
+        mascaraAutomatica: argumento.mascaraAutomatica,
+        mascaraFinal: argumento.mascaraFinal,
+        resultadoAutomatico: argumento.resultadoAutomatico,
+        resultadoFinal: argumento.resultadoFinal,
+        metadadosAnalise: argumento.metadadosAnalise,
       );
     }
 

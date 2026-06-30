@@ -1,6 +1,7 @@
 import 'package:cobertura_dossel/application/application.dart';
 import 'package:cobertura_dossel/domain/domain.dart';
 import 'package:cobertura_dossel/presentation/pages/analises_salvas_page.dart';
+import 'package:cobertura_dossel/presentation/routes/rotas_app.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -53,6 +54,34 @@ void main() {
     expect(find.textContaining('Validada'), findsOneWidget);
     expect(find.textContaining('Resultado final'), findsOneWidget);
   });
+
+  testWidgets('ao tocar em análise salva, navega com dados de reabertura', (
+    tester,
+  ) async {
+    final resumo = _criarResumoAnaliseSalva(possuiFinal: true);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {
+          RotasApp.analise: (context) {
+            final dados =
+                ModalRoute.of(context)!.settings.arguments
+                    as DadosAnaliseReaberta;
+            return Scaffold(body: Text('Reaberta: ${dados.analise.nome}'));
+          },
+        },
+        home: AnalisesSalvasPage(
+          consultaAnaliseService: _ConsultaAnaliseFake([resumo]),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.text('Análise salva para lista'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Reaberta: Análise salva para lista'), findsOneWidget);
+  });
 }
 
 class _ConsultaAnaliseFake extends ConsultaAnaliseService {
@@ -64,6 +93,22 @@ class _ConsultaAnaliseFake extends ConsultaAnaliseService {
   @override
   Future<List<ResumoAnaliseSalva>> listarAnalisesSalvas() async {
     return resumos;
+  }
+
+  @override
+  Future<DadosAnaliseReaberta> buscarAnaliseCompletaPorId(
+    String analiseId,
+  ) async {
+    final resumo = resumos.firstWhere((item) => item.analise.id == analiseId);
+    return DadosAnaliseReaberta(
+      analise: resumo.analise,
+      imagem: resumo.imagem!,
+      mascaraAutomatica: resumo.mascaraAutomatica!,
+      mascaraFinal: resumo.mascaraFinal,
+      resultadoAutomatico: resumo.resultadoAutomatico!,
+      resultadoFinal: resumo.resultadoFinal,
+      metadadosAnalise: resumo.metadados,
+    );
   }
 }
 

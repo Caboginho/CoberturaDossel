@@ -1,4 +1,5 @@
 export 'models/acao_edicao_mascara.dart';
+export 'models/dados_analise_reaberta.dart';
 export 'models/dados_exportacao_analise.dart';
 export 'models/dados_fluxo_analise.dart';
 export 'models/dados_salvamento_analise.dart';
@@ -6,6 +7,7 @@ export 'models/resultado_exportacao.dart';
 export 'models/resultado_salvamento_analise.dart';
 export 'models/resumo_analise_salva.dart';
 export 'models/resumo_resultado_analise.dart';
+export 'services/analise_em_andamento_service.dart';
 export 'services/consulta_analise_service.dart';
 export 'services/exportacao_service.dart';
 export 'services/ferramenta_edicao_service.dart';

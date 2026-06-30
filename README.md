@@ -48,6 +48,8 @@ Regras centrais:
 - Fase 10 - Exportação básica em CSV e JSON.
 - Fase 11 - Revisão técnica, padronização, reforço de testes e preparação para validação funcional.
 - Fase 12 - Estrutura de validação com imagens reais ou licenciadas.
+- Fase 13 - Correções de campo no Moto G15: recuperação do fluxo de câmera Android e melhoria dos gestos do editor de máscara.
+- Fase 14 - Reabertura de análises salvas, edição com imagem original sobreposta e preparação para distribuição beta do APK.
 
 ## Arquitetura
 
@@ -151,6 +153,19 @@ Cuidados mantidos:
 - A imagem original é copiada para armazenamento interno e não é alterada.
 - Segmentação automática inicial e geração de máscara foram iniciadas na Fase 5.
 
+### Correção do Fluxo de Câmera no Android
+
+A Fase 13 corrige um problema observado em teste real no smartphone Moto G15: após capturar uma foto, o aplicativo podia retornar para o cadastro sem preservar os dados da análise. O fluxo agora mantém a análise em andamento em `AnaliseEmAndamentoService`, preservando nome, observações, identificador e datas enquanto a imagem é capturada ou recuperada.
+
+Também foi adicionado o método `recuperarImagemPerdida` em `EntradaImagemService`, implementado com `ImagePicker.retrieveLostData()` em `ImagePickerEntradaImagemService`. Ao abrir a tela `EscolherImagemPage`, o aplicativo tenta recuperar uma imagem perdida pelo ciclo de vida do Android. Quando houver recuperação válida, a imagem é associada à análise em andamento, preparada como imagem original preservada e o botão `Continuar para processamento` fica disponível.
+
+Mensagens adicionadas ou reforçadas:
+
+- `Imagem recuperada após retorno da câmera. Os dados da análise foram preservados.`
+- `A captura foi cancelada.`
+- `Não foi possível recuperar a imagem capturada.`
+- `Análise em andamento preservada.`
+
 ## Segmentação Automática Inicial
 
 A Fase 5 adiciona um classificador heurístico céu/não céu:
@@ -218,6 +233,22 @@ Limitações da Fase 7:
 - A edição é funcional e mínima, sem ferramentas avançadas de seleção, preenchimento, atalhos ou ajustes finos de borda.
 - A exportação básica em CSV/JSON foi implementada na Fase 10; PDF e relatórios avançados continuam reservados para evolução posterior.
 
+### Padrão de Gestos em Campo
+
+A Fase 13 ajusta o editor para uso real em tela touch, a partir do teste no Moto G15. O editor passa a separar claramente dois modos:
+
+- `Navegar`: arrastar move a imagem e pinça aplica zoom. Neste modo, o gesto não pinta a máscara.
+- `Editar`: toque ou arraste com um dedo pinta a máscara. Neste modo, a imagem fica fixa durante a pintura.
+
+A interface mostra o modo atual, a classe ativa (`Céu` ou `Não céu`) e o tamanho do pincel. A edição assistida com uma área lateral ou botão de segurar para editar permanece documentada como melhoria futura, sem entrar como funcionalidade grande nesta fase.
+
+Cuidados mantidos:
+
+- A imagem original continua sendo apenas referência visual.
+- A máscara automática não é sobrescrita.
+- A máscara final continua sendo salva como arquivo separado após validação.
+- O editor não adiciona IA, LAI direto ou PDF real.
+
 ## Resultados da Análise
 
 A Fase 8 consolida o cálculo e a apresentação dos resultados. O sistema agora usa um serviço de aplicação para criar resultado automático, criar resultado final, calcular diferença percentual e montar um resumo de apresentação para a tela de resultados.
@@ -262,7 +293,7 @@ Comportamento implementado:
 - Análises sem validação final podem ser salvas com resultado automático preliminar.
 - Análises com máscara final são salvas com `statusValidacao` verdadeiro.
 - A tela `Análises salvas` consulta o banco e lista nome, data de atualização, status de validação e percentual de dossel disponível.
-- A reabertura completa da análise salva fica preparada, mas ainda não implementada.
+- A tela `Análises salvas` reabre análises persistidas com imagem, máscaras, resultados e metadados disponíveis.
 
 Cuidados mantidos:
 
@@ -370,6 +401,23 @@ Cuidados mantidos:
 - A validação compara resultado automático preliminar e resultado final validado pelo pesquisador.
 - O MVP continua sem inteligência artificial, sem medição direta de LAI e sem PDF real.
 
+## Reabertura e Distribuição Beta
+
+A Fase 14 melhora o fluxo real antes da distribuição beta do APK. As análises salvas podem ser reabertas a partir de `Análises salvas`, carregando imagem original, máscara automática, máscara final quando existir, resultado automático, resultado final quando existir e metadados disponíveis. A reabertura usa `ConsultaAnaliseService.buscarAnaliseCompletaPorId` e o modelo `DadosAnaliseReaberta`.
+
+O editor de máscara agora usa a imagem original como referência visual:
+
+- `Sobreposição`: imagem original embaixo e máscara em cima com opacidade ajustável.
+- `Imagem original`: visualização da imagem sem máscara.
+- `Máscara`: visualização da máscara editável.
+
+Quando uma análise reaberta já possui máscara final, o editor usa a máscara final como base de correção. Ao validar novamente, uma nova máscara final é salva como arquivo separado; a imagem original e a máscara automática não são sobrescritas.
+
+Documentos de beta:
+
+- `docs/distribuicao_beta.md`: orientação para geração, instalação, teste e relato de erros do APK beta.
+- `docs/checklist_distribuicao_beta.md`: checklist antes de distribuir o APK.
+
 ## Comandos
 
 Instalar dependências:
@@ -394,6 +442,18 @@ Executar o aplicativo base:
 
 ```bash
 flutter run
+```
+
+Gerar APK Android para teste em smartphone:
+
+```bash
+flutter build apk --release
+```
+
+APK gerado em:
+
+```text
+build/app/outputs/flutter-apk/app-release.apk
 ```
 
 Consolidar um CSV de validação em tabela Markdown:

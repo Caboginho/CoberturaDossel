@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../../application/application.dart';
+import '../routes/rotas_app.dart';
 import '../widgets/cartao_informativo.dart';
 import '../widgets/pagina_base.dart';
 
-/// Lista análises persistidas no SQLite.
+/// Lista análises persistidas no SQLite e permite reabrir o fluxo salvo.
 ///
-/// A reabertura completa da análise fica para fase posterior; nesta fase a tela
-/// confirma que o salvamento local já está consultável.
+/// A reabertura carrega entidades e caminhos persistidos, sem bytes de imagem.
+/// Isso mantém a imagem original preservada e permite continuar revisão,
+/// visualização, salvamento e exportação com dados reais.
 class AnalisesSalvasPage extends StatefulWidget {
   const AnalisesSalvasPage({this.consultaAnaliseService, super.key});
 
@@ -20,6 +22,7 @@ class AnalisesSalvasPage extends StatefulWidget {
 class _AnalisesSalvasPageState extends State<AnalisesSalvasPage> {
   late final ConsultaAnaliseService _consultaAnaliseService;
   late Future<List<ResumoAnaliseSalva>> _resumosFuture;
+  String? _analiseReabrindoId;
 
   @override
   void initState() {
@@ -54,14 +57,18 @@ class _AnalisesSalvasPageState extends State<AnalisesSalvasPage> {
               const CartaoInformativo(
                 titulo: 'Nenhuma análise salva ainda',
                 texto:
-                    'Salve uma análise na tela de resultados para que ela '
-                    'apareça nesta lista.',
+                    'Salve uma análise na tela de resultados para que ela apareça nesta lista.',
                 icone: Icons.folder_off_outlined,
               ),
             );
           } else {
             filhos.addAll([
-              for (final resumo in resumos) _ItemAnaliseSalva(resumo: resumo),
+              for (final resumo in resumos)
+                _ItemAnaliseSalva(
+                  resumo: resumo,
+                  reabrindo: _analiseReabrindoId == resumo.analise.id,
+                  aoTocar: () => _reabrirAnalise(resumo.analise.id),
+                ),
             ]);
           }
         }
@@ -70,12 +77,49 @@ class _AnalisesSalvasPageState extends State<AnalisesSalvasPage> {
       },
     );
   }
+
+  Future<void> _reabrirAnalise(String analiseId) async {
+    setState(() {
+      _analiseReabrindoId = analiseId;
+    });
+
+    try {
+      final dados = await _consultaAnaliseService.buscarAnaliseCompletaPorId(
+        analiseId,
+      );
+      if (!mounted) {
+        return;
+      }
+
+      Navigator.pushNamed(context, RotasApp.analise, arguments: dados);
+    } on Object catch (erro) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Não foi possível reabrir a análise: $erro')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _analiseReabrindoId = null;
+        });
+      }
+    }
+  }
 }
 
 class _ItemAnaliseSalva extends StatelessWidget {
-  const _ItemAnaliseSalva({required this.resumo});
+  const _ItemAnaliseSalva({
+    required this.resumo,
+    required this.reabrindo,
+    required this.aoTocar,
+  });
 
   final ResumoAnaliseSalva resumo;
+  final bool reabrindo;
+  final VoidCallback aoTocar;
 
   @override
   Widget build(BuildContext context) {
@@ -92,26 +136,27 @@ class _ItemAnaliseSalva extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: ListTile(
-        leading: Icon(
-          resumo.validada ? Icons.verified_outlined : Icons.pending_actions,
-          color: tema.colorScheme.primary,
-        ),
+        leading: reabrindo
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Icon(
+                resumo.validada
+                    ? Icons.verified_outlined
+                    : Icons.pending_actions,
+                color: tema.colorScheme.primary,
+              ),
         title: Text(resumo.analise.nome),
         subtitle: Text(
           'Atualizada em ${_formatarData(resumo.analise.dataAtualizacao)}\n'
           '$status\n'
           '$origemResultado: ${percentualDossel == null ? 'não calculado' : '${percentualDossel.toStringAsFixed(2)}% de dossel'}',
         ),
+        trailing: const Icon(Icons.chevron_right),
         isThreeLine: true,
-        onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Reabertura completa será implementada em fase posterior.',
-              ),
-            ),
-          );
-        },
+        onTap: reabrindo ? null : aoTocar,
       ),
     );
   }

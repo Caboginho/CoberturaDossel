@@ -164,6 +164,19 @@ class _ExportacaoPageState extends State<ExportacaoPage> {
       );
     }
 
+    if (argumento is DadosAnaliseReaberta) {
+      return DadosExportacaoAnalise(
+        analise: argumento.analise,
+        imagem: argumento.imagem,
+        mascaraAutomatica: argumento.mascaraAutomatica,
+        mascaraFinal: argumento.mascaraFinal,
+        resultadoAutomatico: argumento.resultadoAutomatico,
+        resultadoFinal: argumento.resultadoFinal,
+        metadadosAnalise: argumento.metadadosAnalise,
+        formatoExportacao: _formatoSelecionado,
+      );
+    }
+
     if (argumento is ResumoAnaliseSalva) {
       final imagem = argumento.imagem;
       final mascaraAutomatica = argumento.resultadoAutomatico == null

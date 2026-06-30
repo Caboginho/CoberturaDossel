@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../application/application.dart';
 import '../../domain/domain.dart';
 import '../routes/rotas_app.dart';
 import '../widgets/botao_primario.dart';
@@ -11,7 +12,9 @@ import '../widgets/pagina_base.dart';
 /// A Fase 9 preserva nome e observações em uma entidade [Analise] que segue pelo
 /// fluxo até o salvamento definitivo no SQLite.
 class NovaAnalisePage extends StatefulWidget {
-  const NovaAnalisePage({super.key});
+  const NovaAnalisePage({this.analiseEmAndamentoService, super.key});
+
+  final AnaliseEmAndamentoService? analiseEmAndamentoService;
 
   @override
   State<NovaAnalisePage> createState() => _NovaAnalisePageState();
@@ -21,6 +24,19 @@ class _NovaAnalisePageState extends State<NovaAnalisePage> {
   final _formKey = GlobalKey<FormState>();
   final _nomeController = TextEditingController();
   final _observacoesController = TextEditingController();
+  late final AnaliseEmAndamentoService _analiseEmAndamentoService;
+
+  @override
+  void initState() {
+    super.initState();
+    _analiseEmAndamentoService =
+        widget.analiseEmAndamentoService ?? AnaliseEmAndamentoService.instancia;
+    final analiseEmAndamento = _analiseEmAndamentoService.recuperarAnalise();
+    if (analiseEmAndamento != null) {
+      _nomeController.text = analiseEmAndamento.nome;
+      _observacoesController.text = analiseEmAndamento.observacoes;
+    }
+  }
 
   @override
   void dispose() {
@@ -86,6 +102,7 @@ class _NovaAnalisePageState extends State<NovaAnalisePage> {
                 observacoes: _observacoesController.text.trim(),
                 versaoAlgoritmo: 'regras_visuais_mvp',
               );
+              _analiseEmAndamentoService.guardarAnalise(analise);
               Navigator.pushNamed(
                 context,
                 RotasApp.escolherImagem,

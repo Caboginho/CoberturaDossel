@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -12,6 +13,10 @@ import '../widgets/imagem_com_mascara.dart';
 import '../widgets/modo_visualizacao_mascara.dart';
 import '../widgets/pagina_base.dart';
 import '../widgets/titulo_secao.dart';
+
+enum ModoInteracaoEditorMascara { navegar, editar }
+
+enum ModoVisualizacaoEditorMascara { sobreposicao, imagemOriginal, mascara }
 
 /// Editor manual mínimo da máscara.
 ///
@@ -42,7 +47,12 @@ class _EditorMascaraPageState extends State<EditorMascaraPage> {
   Uint8List? _bytesMascaraEditada;
   ClassePixel _classeAtiva = ClassePixel.ceu;
   TipoFerramenta _ferramentaAtiva = TipoFerramenta.pincel;
+  ModoInteracaoEditorMascara _modoInteracao =
+      ModoInteracaoEditorMascara.navegar;
+  ModoVisualizacaoEditorMascara _modoVisualizacao =
+      ModoVisualizacaoEditorMascara.sobreposicao;
   double _tamanhoPincel = 5;
+  double _opacidadeMascara = 0.60;
   bool _argumentosLidos = false;
   bool _carregandoMascara = false;
   bool _validandoMascara = false;
@@ -67,7 +77,16 @@ class _EditorMascaraPageState extends State<EditorMascaraPage> {
 
     _argumentosLidos = true;
     final argumento = ModalRoute.of(context)?.settings.arguments;
-    if (argumento is DadosProcessamentoAnalise) {
+    if (argumento is DadosAnaliseReaberta) {
+      _analise = argumento.analise;
+      _resultadoProcessamento = argumento.processamento;
+      _carregarMascara(
+        argumento.processamento,
+        caminhoMascaraBase:
+            (argumento.mascaraFinal ?? argumento.mascaraAutomatica)
+                .caminhoArquivo,
+      );
+    } else if (argumento is DadosProcessamentoAnalise) {
       _analise = argumento.analise;
       _resultadoProcessamento = argumento.processamento;
       _carregarMascara(argumento.processamento);
@@ -107,6 +126,8 @@ class _EditorMascaraPageState extends State<EditorMascaraPage> {
             icone: Icons.image_not_supported_outlined,
           ),
         const TituloSecao('Edição da máscara'),
+        _controleVisualizacaoEditor(),
+        _controleModoInteracao(),
         _areaEdicao(),
         const TituloSecao('Classe ativa'),
         _controleClasse(),
@@ -152,14 +173,116 @@ class _EditorMascaraPageState extends State<EditorMascaraPage> {
       );
     }
 
-    return _AreaEdicaoMascara(
+    return AreaEdicaoMascara(
+      caminhoImagemOriginal: _resultadoProcessamento?.imagem.caminhoArquivo,
       bytesMascara: bytes,
       largura: mascara.width,
       altura: mascara.height,
+      modoInteracao: _modoInteracao,
+      modoVisualizacao: _modoVisualizacao,
+      opacidadeMascara: _opacidadeMascara,
+      classeAtiva: _classeAtiva,
+      tamanhoPincel: _tamanhoPincel,
       aoIniciarEdicao: _iniciarEdicao,
       aoContinuarEdicao: _continuarEdicao,
       aoFinalizarEdicao: _finalizarEdicao,
       aoTocar: _aplicarToque,
+    );
+  }
+
+  Widget _controleVisualizacaoEditor() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SegmentedButton<ModoVisualizacaoEditorMascara>(
+          segments: const [
+            ButtonSegment(
+              value: ModoVisualizacaoEditorMascara.sobreposicao,
+              label: Text('Sobreposição'),
+              icon: Icon(Icons.layers_outlined),
+            ),
+            ButtonSegment(
+              value: ModoVisualizacaoEditorMascara.imagemOriginal,
+              label: Text('Imagem original'),
+              icon: Icon(Icons.image_outlined),
+            ),
+            ButtonSegment(
+              value: ModoVisualizacaoEditorMascara.mascara,
+              label: Text('Máscara'),
+              icon: Icon(Icons.texture_outlined),
+            ),
+          ],
+          selected: {_modoVisualizacao},
+          onSelectionChanged: (selecionados) {
+            setState(() {
+              _modoVisualizacao = selecionados.first;
+            });
+          },
+        ),
+        const SizedBox(height: 8),
+        Text('Opacidade da máscara: ${(_opacidadeMascara * 100).round()}%'),
+        Slider(
+          value: _opacidadeMascara,
+          min: 0,
+          max: 1,
+          divisions: 20,
+          label: '${(_opacidadeMascara * 100).round()}%',
+          onChanged: (valor) {
+            setState(() {
+              _opacidadeMascara = valor;
+            });
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _controleModoInteracao() {
+    final modoNavegarAtivo =
+        _modoInteracao == ModoInteracaoEditorMascara.navegar;
+    final classe = _classeAtiva == ClassePixel.ceu ? 'Céu' : 'Não céu';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SegmentedButton<ModoInteracaoEditorMascara>(
+          segments: const [
+            ButtonSegment(
+              value: ModoInteracaoEditorMascara.navegar,
+              label: Text('Navegar'),
+              icon: Icon(Icons.pan_tool_alt_outlined),
+            ),
+            ButtonSegment(
+              value: ModoInteracaoEditorMascara.editar,
+              label: Text('Editar'),
+              icon: Icon(Icons.brush_outlined),
+            ),
+          ],
+          selected: {_modoInteracao},
+          onSelectionChanged: (selecionados) {
+            setState(() {
+              _modoInteracao = selecionados.first;
+              _estadoRegistradoNoGesto = false;
+            });
+          },
+        ),
+        const SizedBox(height: 8),
+        CartaoInformativo(
+          titulo: modoNavegarAtivo
+              ? 'Modo atual: Navegar'
+              : 'Modo atual: Editar',
+          texto: modoNavegarAtivo
+              ? 'Arraste com um dedo para mover a imagem e use pinça com dois dedos para zoom. Neste modo, o gesto não pinta a máscara.'
+              : 'Toque ou arraste com um dedo para pintar a máscara. A imagem fica fixa durante a pintura. Classe ativa: $classe. Pincel: ${_tamanhoPincel.round()} px.',
+          icone: modoNavegarAtivo
+              ? Icons.open_with_outlined
+              : Icons.edit_location_alt_outlined,
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Em celular, use Navegar para posicionar a imagem e Editar para corrigir a máscara. A edição assistida com área lateral fica preparada como melhoria futura.',
+        ),
+      ],
     );
   }
 
@@ -268,8 +391,9 @@ class _EditorMascaraPageState extends State<EditorMascaraPage> {
   }
 
   Future<void> _carregarMascara(
-    ResultadoProcessamentoImagem resultadoProcessamento,
-  ) async {
+    ResultadoProcessamentoImagem resultadoProcessamento, {
+    String? caminhoMascaraBase,
+  }) async {
     setState(() {
       _carregandoMascara = true;
       _erroCarregamento = null;
@@ -277,7 +401,8 @@ class _EditorMascaraPageState extends State<EditorMascaraPage> {
 
     try {
       final mascara = await _ferramentaEdicaoService.carregarMascaraAutomatica(
-        resultadoProcessamento.mascaraAutomatica.caminhoArquivo,
+        caminhoMascaraBase ??
+            resultadoProcessamento.mascaraAutomatica.caminhoArquivo,
       );
       if (!mounted) {
         return;
@@ -300,11 +425,17 @@ class _EditorMascaraPageState extends State<EditorMascaraPage> {
   }
 
   void _iniciarEdicao(Offset posicao) {
+    if (_modoInteracao != ModoInteracaoEditorMascara.editar) {
+      return;
+    }
     _registrarEstadoParaGesto();
     _aplicarEdicao(posicao);
   }
 
   void _continuarEdicao(Offset posicao) {
+    if (_modoInteracao != ModoInteracaoEditorMascara.editar) {
+      return;
+    }
     _registrarEstadoParaGesto();
     _aplicarEdicao(posicao);
   }
@@ -314,6 +445,9 @@ class _EditorMascaraPageState extends State<EditorMascaraPage> {
   }
 
   void _aplicarToque(Offset posicao) {
+    if (_modoInteracao != ModoInteracaoEditorMascara.editar) {
+      return;
+    }
     _registrarEstadoParaGesto();
     _aplicarEdicao(posicao);
     _estadoRegistradoNoGesto = false;
@@ -449,20 +583,38 @@ class _EditorMascaraPageState extends State<EditorMascaraPage> {
   }
 }
 
-class _AreaEdicaoMascara extends StatelessWidget {
-  const _AreaEdicaoMascara({
+/// Área touch usada pelo editor para separar navegação e pintura da máscara.
+///
+/// Em modo navegar, o `InteractiveViewer` recebe pan e zoom e os callbacks de
+/// pintura ficam inativos. Em modo editar, pan e zoom são desativados para que
+/// toque e arraste apliquem correções somente sobre a máscara em memória.
+class AreaEdicaoMascara extends StatelessWidget {
+  const AreaEdicaoMascara({
+    this.caminhoImagemOriginal,
     required this.bytesMascara,
     required this.largura,
     required this.altura,
+    required this.modoInteracao,
+    required this.modoVisualizacao,
+    required this.opacidadeMascara,
+    required this.classeAtiva,
+    required this.tamanhoPincel,
     required this.aoIniciarEdicao,
     required this.aoContinuarEdicao,
     required this.aoFinalizarEdicao,
     required this.aoTocar,
+    super.key,
   });
 
+  final String? caminhoImagemOriginal;
   final Uint8List bytesMascara;
   final int largura;
   final int altura;
+  final ModoInteracaoEditorMascara modoInteracao;
+  final ModoVisualizacaoEditorMascara modoVisualizacao;
+  final double opacidadeMascara;
+  final ClassePixel classeAtiva;
+  final double tamanhoPincel;
   final ValueChanged<Offset> aoIniciarEdicao;
   final ValueChanged<Offset> aoContinuarEdicao;
   final VoidCallback aoFinalizarEdicao;
@@ -471,6 +623,13 @@ class _AreaEdicaoMascara extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
+    final modoEdicaoAtivo = modoInteracao == ModoInteracaoEditorMascara.editar;
+    final mostrarImagem =
+        modoVisualizacao != ModoVisualizacaoEditorMascara.mascara &&
+        caminhoImagemOriginal != null;
+    final mostrarMascara =
+        modoVisualizacao != ModoVisualizacaoEditorMascara.imagemOriginal;
+    final classe = classeAtiva == ClassePixel.ceu ? 'Céu' : 'Não céu';
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -484,26 +643,87 @@ class _AreaEdicaoMascara extends StatelessWidget {
           child: InteractiveViewer(
             minScale: 0.5,
             maxScale: 8,
+            panEnabled: !modoEdicaoAtivo,
+            scaleEnabled: !modoEdicaoAtivo,
             child: Center(
               child: FittedBox(
                 fit: BoxFit.contain,
                 child: SizedBox(
                   width: largura.toDouble(),
                   height: altura.toDouble(),
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTapDown: (detalhes) => aoTocar(detalhes.localPosition),
-                    onPanStart: (detalhes) =>
-                        aoIniciarEdicao(detalhes.localPosition),
-                    onPanUpdate: (detalhes) =>
-                        aoContinuarEdicao(detalhes.localPosition),
-                    onPanEnd: (_) => aoFinalizarEdicao(),
-                    onPanCancel: aoFinalizarEdicao,
-                    child: Image.memory(
-                      bytesMascara,
-                      fit: BoxFit.fill,
-                      gaplessPlayback: true,
-                    ),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      if (mostrarImagem)
+                        Image.file(
+                          File(caminhoImagemOriginal!),
+                          fit: BoxFit.fill,
+                          errorBuilder: (_, __, ___) {
+                            return ColoredBox(
+                              color: tema.colorScheme.surfaceContainerHighest,
+                              child: const Center(
+                                child: Text('Imagem original indisponível'),
+                              ),
+                            );
+                          },
+                        ),
+                      if (mostrarMascara)
+                        Opacity(
+                          opacity:
+                              modoVisualizacao ==
+                                  ModoVisualizacaoEditorMascara.sobreposicao
+                              ? opacidadeMascara.clamp(0.0, 1.0).toDouble()
+                              : 1,
+                          child: Image.memory(
+                            bytesMascara,
+                            fit: BoxFit.fill,
+                            gaplessPlayback: true,
+                          ),
+                        ),
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTapDown: modoEdicaoAtivo
+                            ? (detalhes) => aoTocar(detalhes.localPosition)
+                            : null,
+                        onPanStart: modoEdicaoAtivo
+                            ? (detalhes) =>
+                                  aoIniciarEdicao(detalhes.localPosition)
+                            : null,
+                        onPanUpdate: modoEdicaoAtivo
+                            ? (detalhes) =>
+                                  aoContinuarEdicao(detalhes.localPosition)
+                            : null,
+                        onPanEnd: modoEdicaoAtivo
+                            ? (_) => aoFinalizarEdicao()
+                            : null,
+                        onPanCancel: modoEdicaoAtivo ? aoFinalizarEdicao : null,
+                        child: const SizedBox.expand(),
+                      ),
+                      if (modoEdicaoAtivo)
+                        Positioned(
+                          left: 8,
+                          bottom: 8,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: tema.colorScheme.surface.withAlpha(220),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: tema.colorScheme.outlineVariant,
+                              ),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 6,
+                              ),
+                              child: Text(
+                                'Editando: $classe | ${tamanhoPincel.round()} px',
+                                style: tema.textTheme.labelSmall,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),

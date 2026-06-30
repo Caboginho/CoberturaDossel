@@ -13,18 +13,20 @@ import '../widgets/titulo_secao.dart';
 
 /// Tela de entrada da imagem original.
 ///
-/// A imagem escolhida ou capturada é copiada para o armazenamento interno do
-/// aplicativo. A origem externa não é modificada, e nenhuma segmentação ou
-/// edição de máscara acontece nesta fase.
+/// A imagem escolhida, capturada ou recuperada do Android é copiada para o
+/// armazenamento interno do aplicativo. A origem externa não é modificada, e
+/// nenhuma segmentação ou edição de máscara acontece nesta etapa.
 class EscolherImagemPage extends StatefulWidget {
   const EscolherImagemPage({
     this.entradaImagemService,
     this.imagemService,
+    this.analiseEmAndamentoService,
     super.key,
   });
 
   final EntradaImagemService? entradaImagemService;
   final ImagemService? imagemService;
+  final AnaliseEmAndamentoService? analiseEmAndamentoService;
 
   @override
   State<EscolherImagemPage> createState() => _EscolherImagemPageState();
@@ -33,12 +35,14 @@ class EscolherImagemPage extends StatefulWidget {
 class _EscolherImagemPageState extends State<EscolherImagemPage> {
   late final EntradaImagemService _entradaImagemService;
   late final ImagemService _imagemService;
+  late final AnaliseEmAndamentoService _analiseEmAndamentoService;
 
   ImagemPreparada? _imagemPreparada;
   String? _mensagem;
   Analise? _analise;
   bool _carregando = false;
   bool _argumentosLidos = false;
+  bool _recuperacaoDadosPerdidosSolicitada = false;
 
   @override
   void initState() {
@@ -46,6 +50,8 @@ class _EscolherImagemPageState extends State<EscolherImagemPage> {
     _entradaImagemService =
         widget.entradaImagemService ?? ImagePickerEntradaImagemService();
     _imagemService = widget.imagemService ?? ImagemService();
+    _analiseEmAndamentoService =
+        widget.analiseEmAndamentoService ?? AnaliseEmAndamentoService.instancia;
   }
 
   @override
@@ -54,11 +60,17 @@ class _EscolherImagemPageState extends State<EscolherImagemPage> {
     if (_argumentosLidos) {
       return;
     }
+
     _argumentosLidos = true;
     final argumento = ModalRoute.of(context)?.settings.arguments;
     if (argumento is Analise) {
       _analise = argumento;
+      _analiseEmAndamentoService.guardarAnalise(argumento);
+    } else {
+      _analise = _analiseEmAndamentoService.recuperarAnalise();
     }
+
+    _agendarRecuperacaoImagemPerdida();
   }
 
   @override
@@ -74,6 +86,14 @@ class _EscolherImagemPageState extends State<EscolherImagemPage> {
               'a imagem original.',
           icone: Icons.image_outlined,
         ),
+        if (_analise != null)
+          CartaoInformativo(
+            titulo: 'Análise em andamento preservada',
+            texto:
+                'Nome: ${_analise!.nome}\n'
+                'Os dados da análise foram preservados durante o fluxo de imagem.',
+            icone: Icons.assignment_turned_in_outlined,
+          ),
         OutlinedButton.icon(
           onPressed: _carregando
               ? null
@@ -139,36 +159,14 @@ class _EscolherImagemPageState extends State<EscolherImagemPage> {
         return;
       }
 
-      if (resultado.cancelado) {
-        setState(() {
-          _imagemPreparada = null;
-          _mensagem = 'Seleção de imagem cancelada.';
-        });
-        return;
-      }
-
-      if (resultado.possuiErro || !resultado.possuiArquivo) {
-        setState(() {
-          _imagemPreparada = null;
-          _mensagem = resultado.mensagemErro ?? 'Nenhuma imagem foi obtida.';
-        });
-        return;
-      }
-
-      final preparada = await _imagemService.prepararImagemOriginal(
-        arquivoExterno: resultado.arquivo!,
+      await _tratarResultadoEntradaImagem(
+        resultado,
         origem: origem,
-        analiseId: _analise?.id ?? 'analise_em_memoria',
+        mensagemSucesso: 'Imagem copiada para o armazenamento interno.',
+        mensagemCancelamento: origem == OrigemImagem.camera
+            ? 'A captura foi cancelada.'
+            : 'Seleção de imagem cancelada.',
       );
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _imagemPreparada = preparada;
-        _mensagem = 'Imagem copiada para o armazenamento interno.';
-      });
     } on Exception catch (erro) {
       if (!mounted) {
         return;
@@ -185,6 +183,91 @@ class _EscolherImagemPageState extends State<EscolherImagemPage> {
         });
       }
     }
+  }
+
+  void _agendarRecuperacaoImagemPerdida() {
+    if (_recuperacaoDadosPerdidosSolicitada) {
+      return;
+    }
+
+    _recuperacaoDadosPerdidosSolicitada = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _recuperarImagemPerdida();
+      }
+    });
+  }
+
+  Future<void> _recuperarImagemPerdida() async {
+    setState(() {
+      _carregando = true;
+    });
+
+    try {
+      final resultado = await _entradaImagemService.recuperarImagemPerdida();
+
+      if (!mounted) {
+        return;
+      }
+
+      if (resultado.semDadosPerdidos) {
+        return;
+      }
+
+      await _tratarResultadoEntradaImagem(
+        resultado,
+        origem: OrigemImagem.camera,
+        mensagemSucesso:
+            'Imagem recuperada após retorno da câmera. Os dados da análise foram preservados.',
+        mensagemCancelamento: 'A captura foi cancelada.',
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _carregando = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _tratarResultadoEntradaImagem(
+    ResultadoEntradaImagem resultado, {
+    required OrigemImagem origem,
+    required String mensagemSucesso,
+    required String mensagemCancelamento,
+  }) async {
+    if (resultado.cancelado) {
+      setState(() {
+        _imagemPreparada = null;
+        _mensagem = mensagemCancelamento;
+      });
+      return;
+    }
+
+    if (resultado.possuiErro || !resultado.possuiArquivo) {
+      setState(() {
+        _imagemPreparada = null;
+        _mensagem =
+            resultado.mensagemErro ??
+            'Não foi possível recuperar a imagem capturada.';
+      });
+      return;
+    }
+
+    final preparada = await _imagemService.prepararImagemOriginal(
+      arquivoExterno: resultado.arquivo!,
+      origem: origem,
+      analiseId: _analise?.id ?? 'analise_em_memoria',
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _imagemPreparada = preparada;
+      _mensagem = mensagemSucesso;
+    });
   }
 }
 

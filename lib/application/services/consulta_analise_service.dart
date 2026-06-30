@@ -1,5 +1,6 @@
 import '../../data/data.dart';
 import '../../domain/domain.dart';
+import '../models/dados_analise_reaberta.dart';
 import '../models/resumo_analise_salva.dart';
 
 /// Serviço de consulta para análises salvas no SQLite.
@@ -66,6 +67,18 @@ class ConsultaAnaliseService {
     );
   }
 
+  /// Busca uma análise salva com os dados essenciais para reabertura do fluxo.
+  ///
+  /// A consulta retorna entidades e caminhos persistidos, sem carregar bytes da
+  /// imagem original ou das máscaras. Isso preserva os arquivos originais e
+  /// mantém a reabertura leve para uso em smartphone.
+  Future<DadosAnaliseReaberta> buscarAnaliseCompletaPorId(
+    String analiseId,
+  ) async {
+    final resumo = await buscarResumoPorId(analiseId);
+    return _criarDadosReabertura(resumo);
+  }
+
   Future<Analise?> buscarAnalisePorId(String analiseId) {
     return _analiseRepository.buscarPorId(analiseId);
   }
@@ -82,6 +95,30 @@ class ConsultaAnaliseService {
     String analiseId,
   ) {
     return _resultadoAnaliseRepository.listarPorAnaliseId(analiseId);
+  }
+
+  DadosAnaliseReaberta _criarDadosReabertura(ResumoAnaliseSalva resumo) {
+    final imagem = resumo.imagem;
+    final mascaraAutomatica = resumo.mascaraAutomatica;
+    final resultadoAutomatico = resumo.resultadoAutomatico;
+
+    if (imagem == null ||
+        mascaraAutomatica == null ||
+        resultadoAutomatico == null) {
+      throw StateError(
+        'Análise salva não possui imagem, máscara automática e resultado automático suficientes para reabertura.',
+      );
+    }
+
+    return DadosAnaliseReaberta(
+      analise: resumo.analise,
+      imagem: imagem,
+      mascaraAutomatica: mascaraAutomatica,
+      mascaraFinal: resumo.mascaraFinal,
+      resultadoAutomatico: resultadoAutomatico,
+      resultadoFinal: resumo.resultadoFinal,
+      metadadosAnalise: resumo.metadados,
+    );
   }
 
   List<Mascara> _ordenarMascaras(List<Mascara> mascaras) {
